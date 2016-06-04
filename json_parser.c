@@ -27,9 +27,6 @@ static inline int json_parser_check_state(json_parser_state* parserState, int st
 static inline int json_parser_add_state(json_parser_state* parserState, int state);
 static inline int json_parser_remove_state(json_parser_state* parserState, int state);
 
-//static json_allocator* JSON_Allocator;
-//static json_factory* JSON_Factory;
-
 
 //TODO: Accept setting for max nested level from user/caller; enforce max nesting level
 json_parser_state* json_parser_init(void* (*allocFunction)(size_t), void (*freeFunction)(void*)) {
@@ -257,25 +254,10 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 		if (parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_quote]) {
 			parserState->jsonStrPos += 1;
 			
-			/*
-			//NOTE: Allocating a json_value to contain the json_string (object property name) lead to memory leak
-			//	when member pair was added to object, but without any reference to the json_value
-			json_value* strVal= JSON_Factory->new_json_value(string_value, NULL, object_value, parentValue);
-			if (!strVal) {
-				json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
-				parserState->state |= (1 << error_state);
-				return obj;
-			}
-			
-			json_string* str = json_parser_parse_string(parserState, strVal);
-			*/
 			json_string* str = json_parser_parse_string(parserState, NULL);
 			if (!str) {
 				return obj;
 			}
-			/*
-			strVal->stringValue = str;
-			*/
 			
 			json_parser_skip_ws(parserState);
 			if (parserState->jsonStr[parserState->jsonStrPos] != JSON_TOKEN_NAMES[json_token_colon]) {
