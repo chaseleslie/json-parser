@@ -1,3 +1,9 @@
+Summary
+-------
 A JSON parser library written in C
 
-Run GNU make to make static and dynamic libraries which are built in the dist/ directory
+Building/Installation
+---------------------
+See the INSTALL file for installation instructions.
+Building is as simple as `./configure && make && make install`.
+
