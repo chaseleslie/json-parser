@@ -5,5 +5,7 @@ A JSON parser library written in C
 Building/Installation
 ---------------------
 See the INSTALL file for installation instructions.
-Building is as simple as `./configure && make && make install`.
+First run the autogen.sh script.
+Then, building is as simple as
+	`./configure && make && make install`
 
