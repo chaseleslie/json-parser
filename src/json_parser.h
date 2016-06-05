@@ -42,7 +42,7 @@ typedef struct json_parser_state {
 } json_parser_state;
 
 
-json_parser_state* json_parser_init(void* (*allocFunction)(size_t), void (*freeFunction)(void*));
+json_parser_state* json_parser_init(alloc_function allocFunction, free_function freeFunction);
 
 int json_parser_clear(json_parser_state* parserState);
 

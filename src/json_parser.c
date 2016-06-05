@@ -44,7 +44,7 @@ static inline int json_parser_remove_state(json_parser_state* parserState, int s
 
 
 //TODO: Accept setting for max nested level from user/caller; enforce max nesting level
-json_parser_state* json_parser_init(void* (*allocFunction)(size_t), void (*freeFunction)(void*)) {
+json_parser_state* json_parser_init(alloc_function allocFunction, free_function freeFunction) {
 	json_allocator* JSON_Allocator;
 	json_factory* JSON_Factory;
 	json_types_init(allocFunction, freeFunction, &JSON_Allocator, &JSON_Factory);
@@ -69,7 +69,7 @@ int json_parser_clear(json_parser_state* parserState) {
 		return 1;
 	}
 	
-	void (*freeFunction)(void*) = parserState->JSON_Allocator->free;
+	free_function freeFunction = parserState->JSON_Allocator->free;
 	freeFunction(parserState->JSON_Factory);
 	freeFunction(parserState->JSON_Allocator);
 	freeFunction(parserState);

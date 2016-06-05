@@ -75,7 +75,7 @@ const char JSON_TOKEN_NAMES[] = {
 };
 
 
-int json_types_init(void* (*allocFunction)(size_t), void (*freeFunction)(void*), json_allocator** jsAllocOut, json_factory** jsFactoryOut) {
+int json_types_init(alloc_function allocFunction, free_function freeFunction, json_allocator** jsAllocOut, json_factory** jsFactoryOut) {
 	//If both alloc and free functions passed by user, use those internally
 	//If only alloc function passed, assume user will take care of freeing memory and use free_noop internally
 	//If only free function or no alloc and free function passed, use defaults (malloc and free)
@@ -321,7 +321,19 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 //Loop through string:value pairs in the passed object, call iter callback passing object, string and value
 //Returns nonzero if passed object or callback is null, zero otherwise
 //Callback should return truthy value, or zero to stop iterating
-int json_object_foreach(json_object* obj, json_object_foreach_cb iter) {
+int json_object_foreach(json_value* val, json_object_foreach_cb iter) {
+	int retVal = 1;
+	if (!val || !iter) {
+		return retVal;
+	}
+	
+	if (val->valueType != object_value) {
+		return retVal;
+	}
+	
+	return json_object_foreach_obj(val->value, iter);
+}
+int json_object_foreach_obj(json_object* obj, json_object_foreach_cb iter) {
 	if (!obj || !iter) {
 		return 1;
 	}
@@ -337,7 +349,19 @@ int json_object_foreach(json_object* obj, json_object_foreach_cb iter) {
 //Loop through elements in the passed array, call iter callback passing array and element
 //Returns nonzero if passed array or callback is null, zero otherwise
 //Callback should return truthy value, or zero to stop iterating
-int json_array_foreach(json_array* arr, json_array_foreach_cb iter) {
+int json_array_foreach(json_value* val, json_array_foreach_cb iter) {
+	int retVal = 1;
+	if (!val || !iter) {
+		return retVal;
+	}
+	
+	if (val->valueType != array_value) {
+		return retVal;
+	}
+	
+	return json_array_foreach_arr(val->value, iter);
+}
+int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter) {
 	if (!arr || !iter) {
 		return 1;
 	}

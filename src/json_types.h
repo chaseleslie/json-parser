@@ -99,7 +99,11 @@ struct json_null;
 typedef struct json_null json_null;
 
 
-int json_types_init(void* (*allocFunction)(size_t), void (*freeFunction)(void*), json_allocator** jsAllocOut, json_factory** jsFactoryOut);
+typedef void* (*alloc_function)(size_t);
+typedef void (*free_function)(void*);
+
+
+int json_types_init(alloc_function allocFunction, free_function freeFunction, json_allocator** jsAllocOut, json_factory** jsFactoryOut);
 
 json_object* json_factory_new_json_object(json_factory* jsonFact, json_value* objParentValue);
 json_value* json_factory_new_json_value(json_factory* jsonFact, JSON_VALUE valValueType, void* valValue, JSON_VALUE valParentValueType, void* valParentValue);
@@ -116,8 +120,10 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 typedef int (*json_object_foreach_cb)(json_object*, json_string*, json_value*);
 typedef int (*json_array_foreach_cb)(json_array*, json_value*);
 
-int json_object_foreach(json_object* obj, json_object_foreach_cb iter);
-int json_array_foreach(json_array* arr, json_array_foreach_cb iter);
+int json_object_foreach(json_value* val, json_object_foreach_cb iter);
+int json_object_foreach_obj(json_object* obj, json_object_foreach_cb iter);
+int json_array_foreach(json_value* val, json_array_foreach_cb iter);
+int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter);
 const char* json_value_get_type(json_value* value);
 
 int json_visitor_free_all(json_parser_state* parserState, json_value* topVal);
