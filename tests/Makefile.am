@@ -1,4 +1,4 @@
-check_PROGRAMS = test
-test_SOURCES = test.c
-test_LDADD = $(top_builddir)/src/libjson.la
-
+check_PROGRAMS = test_libjson
+test_libjson_SOURCES = test_libjson.c
+test_libjson_LDADD = $(top_builddir)/src/libjson.la
+TESTS = test_libjson
