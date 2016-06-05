@@ -5,7 +5,22 @@ A JSON parser library written in C
 Building/Installation
 ---------------------
 See the INSTALL file for installation instructions.
-First run the autogen.sh script.
+
+Briefly, first run the autogen.sh script.
 Then, building is as simple as
 	`./configure && make && make install`
+
+Run `make check` to complete the suite of self-tests
+
+Details
+-------
+The library operates on UTF-8 encoded JSON texts.
+
+A simple example of parsing a JSON source:
+
+json_parser_state* parserState = json_parser_init(NULL, NULL);
+json_value* topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
+
+UTF-16 surrogate pairs encoded as \uXXXX\uXXXX are unencoded in
+JSON strings to a UTF-8 representation.
 
