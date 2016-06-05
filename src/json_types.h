@@ -57,6 +57,9 @@ typedef enum JSON_TOKEN {
 
 extern const char JSON_TOKEN_NAMES[];
 
+struct json_parser_state;
+typedef struct json_parser_state json_parser_state;
+
 struct json_allocator;
 typedef struct json_allocator json_allocator;
 struct json_factory;
@@ -95,10 +98,14 @@ json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulPar
 size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value);
 size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value);
 
-int json_object_foreach(json_object* obj, int (*iter)(json_object* arr, json_string* str, json_value* val));
-int json_array_foreach(json_array* arr, int (*iter)(json_array* arr, json_value* val));
+typedef int (*json_object_foreach_cb)(json_object*, json_string*, json_value*);
+typedef int (*json_array_foreach_cb)(json_array*, json_value*);
+
+int json_object_foreach(json_object* obj, json_object_foreach_cb iter);
+int json_array_foreach(json_array* arr, json_array_foreach_cb iter);
 const char* json_value_get_type(json_value* value);
 
+int json_visitor_free_all(json_parser_state* parserState, json_value* topVal);
 int json_visitor_free_value(json_factory* jsonFact, json_value* value);
 int json_visitor_free_object(json_factory* jsonFact, json_object* obj);
 int json_visitor_free_array(json_factory* jsonFact, json_array* arr);
@@ -139,17 +146,10 @@ typedef struct json_object {
 
 typedef struct json_value {
 	JSON_VALUE valueType;
-	json_string* stringValue;
-	json_number* numberValue;
-	json_object* objectValue;
-	json_array* arrayValue;
-	json_true* trueValue;
-	json_false* falseValue;
-	json_null* nullValue;
+	void* value;
 	
 	JSON_VALUE parentValueType;
-	json_object* parentObject;
-	json_array* parentArray;
+	void* parentValue;
 } json_value;
 
 typedef struct json_string {

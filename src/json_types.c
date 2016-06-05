@@ -5,6 +5,7 @@
 #define JSON_TOP_LVL 1
 
 #include "json_types.h"
+#include "json_parser.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +40,9 @@ const char* const JSON_VALUE_NAMES[] = {
 
 const char* const JSON_PARSER_STATE_NAMES[] = {
 	"init",
+	"",
 	"complete",
+	"",
 	"error"
 };
 
@@ -145,53 +148,10 @@ json_value* json_factory_new_json_value(json_factory* jsonFact, JSON_VALUE valVa
 	}
 	
 	value->valueType = valValueType;
-	
-	value->stringValue = NULL;
-	value->numberValue = NULL;
-	value->objectValue = NULL;
-	value->arrayValue = NULL;
-	value->trueValue = NULL;
-	value->falseValue = NULL;
-	value->nullValue = NULL;
-	
-	switch (valValueType) {
-		default:
-		case unspecified_value:
-			
-		break;
-		case string_value:
-			value->stringValue = (json_string*) valValue;
-		break;
-		case number_value:
-			value->numberValue = (json_number*) valValue;
-		break;
-		case object_value:
-			value->objectValue = (json_object*) valValue;
-		break;
-		case array_value:
-			value->arrayValue = (json_array*) valValue;
-		break;
-		case true_value:
-			value->trueValue = (json_true*) valValue;
-		break;
-		case false_value:
-			value->falseValue = (json_false*) valValue;
-		break;
-		case null_value:
-			value->nullValue = (json_null*) valValue;
-		break;
-	}
+	value->value = valValue;
 	
 	value->parentValueType = valParentValueType;
-	value->parentObject = NULL;
-	value->parentArray = NULL;
-	if (valParentValueType == object_value) {
-		value->parentObject = (json_object*) valParentValue;
-	} else if (valParentValueType == array_value) {
-		value->parentArray = (json_array*) valParentValue;
-	} else {
-		//value is top node
-	}
+	value->parentValue = valParentValue;
 	
 	return value;
 }
@@ -346,7 +306,7 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 //Loop through string:value pairs in the passed object, call iter callback passing object, string and value
 //Returns nonzero if passed object or callback is null, zero otherwise
 //Callback should return truthy value, or zero to stop iterating
-int json_object_foreach(json_object* obj, int (*iter)(json_object* arr, json_string* str, json_value* val)) {
+int json_object_foreach(json_object* obj, json_object_foreach_cb iter) {
 	if (!obj || !iter) {
 		return 1;
 	}
@@ -362,7 +322,7 @@ int json_object_foreach(json_object* obj, int (*iter)(json_object* arr, json_str
 //Loop through elements in the passed array, call iter callback passing array and element
 //Returns nonzero if passed array or callback is null, zero otherwise
 //Callback should return truthy value, or zero to stop iterating
-int json_array_foreach(json_array* arr, int (*iter)(json_array* arr, json_value* val)) {
+int json_array_foreach(json_array* arr, json_array_foreach_cb iter) {
 	if (!arr || !iter) {
 		return 1;
 	}
@@ -385,6 +345,15 @@ const char* json_value_get_type(json_value* value) {
  * Return zero on success, nonzero on failure
  */
 
+int json_visitor_free_all(json_parser_state* parserState, json_value* topVal) {
+	int ret = 1;
+	if (!parserState || !topVal) {
+		return ret;
+	}
+	
+	return json_visitor_free_value(parserState->JSON_Factory, topVal);
+}
+
 int json_visitor_free_value(json_factory* jsonFact, json_value* value) {
 	int ret = (value) ? 0 : 1;
 	if (ret) {
@@ -397,25 +366,25 @@ int json_visitor_free_value(json_factory* jsonFact, json_value* value) {
 			ret = 1;
 		break;
 		case string_value:
-			ret = json_visitor_free_string(jsonFact, value->stringValue);
+			ret = json_visitor_free_string(jsonFact, value->value);
 		break;
 		case number_value:
-			ret = json_visitor_free_number(jsonFact, value->numberValue);
+			ret = json_visitor_free_number(jsonFact, value->value);
 		break;
 		case object_value:
-			ret = json_visitor_free_object(jsonFact, value->objectValue);
+			ret = json_visitor_free_object(jsonFact, value->value);
 		break;
 		case array_value:
-			ret = json_visitor_free_array(jsonFact, value->arrayValue);
+			ret = json_visitor_free_array(jsonFact, value->value);
 		break;
 		case true_value:
-			ret = json_visitor_free_true(jsonFact, value->trueValue);
+			ret = json_visitor_free_true(jsonFact, value->value);
 		break;
 		case false_value:
-			ret = json_visitor_free_false(jsonFact, value->falseValue);
+			ret = json_visitor_free_false(jsonFact, value->value);
 		break;
 		case null_value:
-			ret = json_visitor_free_null(jsonFact, value->nullValue);
+			ret = json_visitor_free_null(jsonFact, value->value);
 		break;
 	}
 	

@@ -106,7 +106,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 				parserState->JSON_Allocator->free(val);
 				return NULL;
 			}
-			val->objectValue = obj;
+			val->value = obj;
 			parserState->nestedLevel -= 1;
 		}
 		break;
@@ -128,7 +128,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 				parserState->JSON_Allocator->free(val);
 				return NULL;
 			}
-			val->arrayValue = arr;
+			val->value = arr;
 			parserState->nestedLevel -= 1;
 		}
 		break;
@@ -144,7 +144,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 				parserState->JSON_Allocator->free(val);
 				return NULL;
 			}
-			val->numberValue = num;
+			val->value = num;
 		}
 		break;
 		case '"': {
@@ -160,7 +160,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 				parserState->JSON_Allocator->free(val);
 				return NULL;
 			}
-			val->stringValue = str;
+			val->value = str;
 		}
 		break;
 		default: {
@@ -176,7 +176,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 					parserState->JSON_Allocator->free(val);
 					return NULL;
 				}
-				val->trueValue = tru;
+				val->value = tru;
 			} else if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[false_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, false_value, NULL, unspecified_value, NULL);
 				if (!val) {
@@ -189,7 +189,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 					parserState->JSON_Allocator->free(val);
 					return NULL;
 				}
-				val->falseValue = fals;
+				val->value = fals;
 			} else if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[null_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, null_value, NULL, unspecified_value, NULL);
 				if (!val) {
@@ -202,7 +202,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 					parserState->JSON_Allocator->free(val);
 					return NULL;
 				}
-				val->nullValue = nul;
+				val->value = nul;
 			} else {
 				json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
 				return NULL;
@@ -213,13 +213,11 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 	}
 	
 	if (parentValue) {
-		if (parentValueType == object_value) {
-			val->parentValueType = object_value;
-			val->parentObject = (json_object*) parentValue;
-		} else if (parentValueType == array_value) {
-			val->parentValueType = array_value;
-			val->parentArray = (json_array*) parentValue;
-		}
+		val->parentValueType = parentValueType;
+		val->parentValue = parentValue;
+	} else {
+		val->parentValueType = unspecified_value;
+		val->parentValue = NULL;
 	}
 	
 	return val;
