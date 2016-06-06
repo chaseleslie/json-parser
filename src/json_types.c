@@ -26,11 +26,13 @@
 #include <string.h>
 
 
-#define JSON_OBJ_INIT_SIZE 8
-#define JSON_OBJ_INCR_SIZE 2
-#define JSON_ARRAY_INIT_SIZE 8
-#define JSON_ARRAY_INCR_SIZE 2
+const size_t JSON_OBJ_INIT_SIZE = 8;
+const double JSON_OBJ_INCR_SIZE = 1.5;
 
+const size_t JSON_ARRAY_INIT_SIZE = 8;
+const double JSON_ARRAY_INCR_SIZE = 1.5;
+
+const size_t JSON_ALIGN_SIZE = 8;
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,6 +75,15 @@ const char JSON_TOKEN_NAMES[] = {
 	',',
 	'\\'
 };
+
+
+static size_t align_offset(size_t offset, size_t align) {
+	size_t rem = offset % align;
+	if (!rem) {
+		return offset;
+	}
+	return offset + align - rem;
+}
 
 
 int json_types_init(alloc_function allocFunction, free_function freeFunction, json_allocator** jsAllocOut, json_factory** jsFactoryOut) {
@@ -260,7 +271,7 @@ size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_strin
 		obj->values[obj->size] = value;
 		obj->size += 1;
 	} else {//Realloc
-		size_t sizeIncr = obj->capacity * JSON_OBJ_INCR_SIZE;
+		size_t sizeIncr = align_offset(obj->capacity * JSON_OBJ_INCR_SIZE, JSON_ALIGN_SIZE);
 		json_string** names = (json_string**) jsonFact->allocator->malloc( sizeof(json_string*) * sizeIncr );
 		if (!names) {
 			return 0;
@@ -301,7 +312,7 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 		arr->values[arr->size] = value;
 		arr->size += 1;
 	} else {//Realloc
-		size_t sizeIncr = arr->capacity * JSON_ARRAY_INCR_SIZE;
+		size_t sizeIncr = align_offset(arr->capacity * JSON_ARRAY_INCR_SIZE, JSON_ALIGN_SIZE);
 		json_value** values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * sizeIncr );
 		if (!values) {
 			return 0;
