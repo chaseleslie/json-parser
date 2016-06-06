@@ -13,6 +13,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+/**
+ *  @file json_parser.h
+ *  @brief JSON parser library parser types and functions
+ *
+ *  This header declares objects and functions to parse JSON text.
+ */
+
+
 #ifndef JSON_PARSER_H
 #define JSON_PARSER_H
 
