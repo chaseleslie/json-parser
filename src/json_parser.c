@@ -501,7 +501,7 @@ const char* json_parser_get_state_string(json_parser_state* parserState) {
 	if (parserState) {
 		return JSON_PARSER_STATE_NAMES[parserState->state];
 	}
-	return NULL;
+	return "";
 }
 
 

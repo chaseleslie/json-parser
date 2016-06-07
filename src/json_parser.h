@@ -39,22 +39,97 @@ extern "C" {
 #endif	//#ifdef __cplusplus
 
 
+/**
+ *  @brief Struct representing the parser instance
+ *
+ *  Users shouldn't need to modify this directly, but access it through library calls.
+ */
 typedef struct json_parser_state {
+	/*@{ */
+	/*! Pointer to the JSON text string supplied by user, not modified */
 	const char* jsonStr;
+	/*! Length of the JSON text string */
 	size_t jsonStrLength;
+	/*! Current position in the JSON text string */
 	size_t jsonStrPos;
+	/*! State of the parser instance; see JSON_PARSER_STATE */
 	int state;
+	/*! Current nested level */
 	size_t nestedLevel;
+	/*! Max nested level */
 	size_t maxNestedLevel;
+	/*@} */
+	
+	/*@{ */
+	/*! Pointer to this parser's json_allocator */
 	json_allocator* JSON_Allocator;
+	/*! Pointer to this parser's json_factory */
 	json_factory* JSON_Factory;
+	/*@} */
 } json_parser_state;
 
 
+/**
+ *  @brief Initialize the parser instance
+ *
+ *  This function is called first to initialize the JSON parser instance. It takes two
+ *  arguments, @p allocFunction which is a malloc-like alloc function (see the
+ *  prototype of alloc_function), and @p freeFunction which is a free-like dealloc
+ *  function (see free_function).
+ *
+ *  @c NULL can be given as both arguments, in which case the library will default
+ *  to using malloc and free internally. If a valid function pointer is given for
+ *  @p allocFunction and @c NULL is given as @p freeFunction, the library will
+ *  allocate memory from @p allocFunction and use a noop free function to free
+ *  memory. This is useful if you are allocating memory from a memory pool.
+ *  Passing @c NULL for @p allocFunction and a valid function pointer for
+ *  @p freeFunction, the library will default to using malloc and free.
+ *
+ *  A pointer to the json_parser_state is returned on success, or @c NULL on failure.
+ *  The returned pointer is used in subsequent calls to the library. The returned
+ *  json_parser_state should be deallocated by calling json_parser_clear() when the
+ *  user is finished with the library.
+ *
+ *  @param allocFunction Pointer to a malloc-like function to allocate memory from, or NULL
+ *  @param freeFunction Pointer to a  free-like function to deallocate memory from, or NULL
+ *  @return Pointer to a json_parser_state for this parser instance, or NULL on failure
+ *
+ *  @see alloc_function free_function json_parser_clear() json_parser_state
+ */
 json_parser_state* json_parser_init(alloc_function allocFunction, free_function freeFunction);
 
+/**
+ *  @brief Clear the json_parser_state and free its memory
+ *
+ *  This function destroys the passed json_parser_state and frees the memory that
+ *  was allocated for it. It should be called after the user is finished with the library.
+ *
+ *  @param parserState Pointer to the json_parser_state to clear
+ *  @return Zero on success, or nonzero on failure
+ *
+ *  @see json_parser_init() json_parser_state
+ */
 int json_parser_clear(json_parser_state* parserState);
 
+/**
+ *  @brief Parse the passed JSON text into values
+ *
+ *  This function is the entrypoint to parsing a JSON text and must be called after
+ *  a json_parser_state is initialized with json_parser_init().
+ *
+ *  The passed JSON text source string need not be @c NULL terminated but the
+ *  argument @p jsonStrLength must contain the actual length of the string in
+ *  bytes. @p jsonStr is assumed to be UTF-8 encoded with non-ASCII code points escaped
+ *  or ASCII. UTF-8 encoded JSON is recommended by RFC 7159 to increase
+ *  interoperability of JSON.
+ *
+ *  @param parserState Pointer to instance of parser state created with json_parser_init()
+ *  @param jsonStr A string containing the JSON text to parse
+ *  @param jsonStrLength Length of the JSON text in @p jsonStr
+ *  @return The top-level JSON value parsed from the JSON text, or NULL on failure
+ *
+ *  @see json_value json_parser_state https://tools.ietf.org/html/rfc7159#section-8.1
+ */
 json_value* json_parser_parse(json_parser_state* parserState, const char* jsonStr, size_t jsonStrLength);
 
 json_value* json_parser_parse_value(json_parser_state* parserState, void* parentValue, JSON_VALUE parentValueType);
@@ -73,6 +148,14 @@ json_false* json_parser_parse_false(json_parser_state* parserState, json_value* 
 
 json_null* json_parser_parse_null(json_parser_state* parserState, json_value* parentValue);
 
+/**
+ *  @brief Get a C-string representation of the parser state
+ *
+ *  @param parserState Pointer to parser state instance
+ *  @return A C-string representing the state of the parser
+ *
+ *  @see JSON_PARSER_STATE
+ */
 const char* json_parser_get_state_string(json_parser_state* parserState);
 
 
