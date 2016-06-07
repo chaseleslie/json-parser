@@ -116,6 +116,7 @@ int main(int argc, char** argv) {
 	);
 	const size_t jsonStrLen = strlen(jsonStr);
 	
+	/* Test json_parser_init() with default alloc */
 	json_parser_state* parserState = json_parser_init(NULL, NULL);
 	if (!parserState) {
 		retVal = 1;
@@ -123,6 +124,7 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	
+	/* Test json_parser_parse() with basic JSON str with default alloc */
 	json_value* topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
 	if (!topVal) {
 		retVal = 1;
@@ -130,11 +132,12 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_parser_init(): parser state != complete\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): parser state != complete\n");
 		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
 		exit_failure(retVal);
 	}
 	
+	/* Test json_visitor_free_all() with default alloc */
 	retVal = json_visitor_free_all(parserState, topVal);
 	if (retVal) {
 		retVal = 1;
@@ -142,6 +145,33 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	
+	/* Test json_parser_reset() and parsing/freeing again */
+	topVal = NULL;
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
+	if (!topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() after json_parser_reset()\n");
+		exit_failure(retVal);
+	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() after json_parser_reset(): parser state != complete\n");
+		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		exit_failure(retVal);
+	}
+	retVal = json_visitor_free_all(parserState, topVal);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_value() after json_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	
+	/* Test unescape string to UTF-8 */
 	const char* escapedStr = "Some\\uD834\\uDD1EString";
 	const size_t escapedStrLen = strlen(escapedStr);
 	const char* unescapedStr = json_utils_unescape_string(parserState, escapedStr, escapedStrLen, &retVal);
@@ -155,6 +185,7 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	
+	/* Test error reporting */
 	char buf[BUFSIZ];
 	setbuf(stderr, buf);
 	parserState->jsonStrPos = 26u;

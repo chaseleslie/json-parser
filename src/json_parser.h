@@ -111,6 +111,20 @@ json_parser_state* json_parser_init(alloc_function allocFunction, free_function 
  *  @see json_parser_init() json_parser_state
  */
 int json_parser_clear(json_parser_state* parserState);
+
+/**
+ *  @brief Reset the json_parser_state to prepare for parsing again
+ *
+ *  This function resets the json_parser_state pointed to by @p parserState to
+ *  prepare for additional calls to json_parser_parse(). This function does not
+ *  completely deallocate the parser state instance, for that see json_parser_clear().
+ *
+ *  @param parserState Pointer to the json_parser_state to reset
+ *  @return Zero on success, or nonzero on failure
+ *
+ *  @see json_parser_init() json_parser_state json_parser_clear()
+ */
+int json_parser_reset(json_parser_state* parserState);
 /*@} */
 
 /*@{ */

@@ -77,6 +77,21 @@ int json_parser_clear(json_parser_state* parserState) {
 	return 0;
 }
 
+int json_parser_reset(json_parser_state* parserState) {
+	if (!parserState) {
+		return 1;
+	}
+	
+	parserState->jsonStr = NULL;
+	parserState->jsonStrLength = 0;
+	parserState->jsonStrPos = 0;
+	parserState->state = init_state;
+	parserState->nestedLevel = 0;
+	parserState->maxNestedLevel = JSON_MAX_NESTED_DEFAULT;
+	
+	return 0;
+}
+
 json_value* json_parser_parse(json_parser_state* parserState, const char* jsonStr, size_t jsonStrLength) {
 	if (!parserState || !jsonStr || !jsonStrLength) {
 		return NULL;
