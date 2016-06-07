@@ -69,6 +69,7 @@ typedef struct json_parser_state {
 } json_parser_state;
 
 
+/*@{ */
 /**
  *  @brief Initialize the parser instance
  *
@@ -110,7 +111,9 @@ json_parser_state* json_parser_init(alloc_function allocFunction, free_function 
  *  @see json_parser_init() json_parser_state
  */
 int json_parser_clear(json_parser_state* parserState);
+/*@} */
 
+/*@{ */
 /**
  *  @brief Parse the passed JSON text into values
  *
@@ -119,9 +122,8 @@ int json_parser_clear(json_parser_state* parserState);
  *
  *  The passed JSON text source string need not be @c NULL terminated but the
  *  argument @p jsonStrLength must contain the actual length of the string in
- *  bytes. @p jsonStr is assumed to be UTF-8 encoded with non-ASCII code points escaped
- *  or ASCII. UTF-8 encoded JSON is recommended by RFC 7159 to increase
- *  interoperability of JSON.
+ *  bytes. @p jsonStr is assumed to be UTF-8 encoded or ASCII. UTF-8 encoded
+ *  JSON is recommended by RFC 7159 to increase interoperability of JSON.
  *
  *  @param parserState Pointer to instance of parser state created with json_parser_init()
  *  @param jsonStr A string containing the JSON text to parse
@@ -147,6 +149,7 @@ json_true* json_parser_parse_true(json_parser_state* parserState, json_value* pa
 json_false* json_parser_parse_false(json_parser_state* parserState, json_value* parentValue);
 
 json_null* json_parser_parse_null(json_parser_state* parserState, json_value* parentValue);
+/*@} */
 
 /**
  *  @brief Get a C-string representation of the parser state

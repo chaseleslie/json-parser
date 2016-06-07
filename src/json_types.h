@@ -154,14 +154,24 @@ typedef void (*free_function)(void*);
  */
 int json_types_init(alloc_function allocFunction, free_function freeFunction, json_allocator** jsAllocOut, json_factory** jsFactoryOut);
 
+/*@{ */
+/*! Returns a new json_object */
 json_object* json_factory_new_json_object(json_factory* jsonFact, json_value* objParentValue);
+/*! Returns a new json_value */
 json_value* json_factory_new_json_value(json_factory* jsonFact, JSON_VALUE valValueType, void* valValue, JSON_VALUE valParentValueType, void* valParentValue);
+/*! Returns a new json_string */
 json_string* json_factory_new_json_string(json_factory* jsonFact, const char* strValue, json_value* strParentValue);
+/*! Returns a new json_number */
 json_number* json_factory_new_json_number(json_factory* jsonFact, double numValue, json_value* numParentValue);
+/*! Returns a new json_array */
 json_array* json_factory_new_json_array(json_factory* jsonFact, json_value* arrParentValue);
+/*! Returns a new json_true */
 json_true* json_factory_new_json_true(json_factory* jsonFact, json_value* truParentValue);
+/*! Returns a new json_false */
 json_false* json_factory_new_json_false(json_factory* jsonFact, json_value* falParentValue);
+/*! Returns a new json_null */
 json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulParentValue);
+/*@} */
 
 size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value);
 size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value);
@@ -171,6 +181,7 @@ typedef int (*json_object_foreach_cb)(json_object*, json_string*, json_value*);
 /*! Prototype for a callback function used with json_array_foreach() */
 typedef int (*json_array_foreach_cb)(json_array*, json_value*);
 
+/*@{ */
 /**
  *  @brief Iterate over all the name/value pairs in an object
  *
@@ -226,8 +237,11 @@ int json_array_foreach(json_value* val, json_array_foreach_cb iter);
  *  @see json_array_foreach_cb json_array_foreach()
  */
 int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter);
+/*@} */
+
 const char* json_value_get_type(json_value* value);
 
+/*@{ */
 int json_visitor_free_all(json_parser_state* parserState, json_value* topVal);
 int json_visitor_free_value(json_factory* jsonFact, json_value* value);
 int json_visitor_free_object(json_factory* jsonFact, json_object* obj);
@@ -237,6 +251,7 @@ int json_visitor_free_number(json_factory* jsonFact, json_number* num);
 int json_visitor_free_true(json_factory* jsonFact, json_true* tru);
 int json_visitor_free_false(json_factory* jsonFact, json_false* fals);
 int json_visitor_free_null(json_factory* jsonFact, json_null* nul);
+/*@} */
 
 
 /**
