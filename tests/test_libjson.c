@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 	
 	/* Test error reporting */
 	char buf[BUFSIZ];
-	setbuf(stderr, buf);
+	setbuf(parserState->errorStream, buf);
 	parserState->jsonStrPos = 26u;
 	json_error_lineno("%zu:%zu", parserState);
 	if (strncmp("0:26", buf, 4)) {

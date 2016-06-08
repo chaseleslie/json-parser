@@ -61,6 +61,9 @@ void json_error(const char* err) {
 }
 
 void json_error_lineno(const char* err, json_parser_state* parserState) {
+	if (!parserState->errorStream) {
+		return;
+	}
 	const char* ptr = parserState->jsonStr;
 	size_t count = 0, n = parserState->jsonStrPos, lastNL = 0;
 	for (size_t k = 0; k < n; k += 1) {
@@ -69,7 +72,7 @@ void json_error_lineno(const char* err, json_parser_state* parserState) {
 			lastNL = k;
 		}
 	}
-	fprintf(stderr, err, count, n - lastNL);
+	fprintf(parserState->errorStream, err, count, n - lastNL);
 }
 
 //Unescape the passed json string of given size to a null-terminated UTF-8 string

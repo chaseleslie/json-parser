@@ -32,6 +32,8 @@
 
 
 #include "json_types.h"
+#include <stdarg.h>
+#include <stdio.h>
 
 
 #ifdef __cplusplus
@@ -58,6 +60,8 @@ typedef struct json_parser_state {
 	size_t nestedLevel;
 	/*! Max nested level */
 	size_t maxNestedLevel;
+	/*! Error stream */
+	FILE* errorStream;
 	/*@} */
 	
 	/*@{ */
@@ -70,6 +74,19 @@ typedef struct json_parser_state {
 
 
 /*@{ */
+/**
+ *  @brief Set options for the JSON parser isntance
+ *
+ *  This function sets options for the JSON parser. See JSON_PARSER_OPT for
+ *  the available options and what type of arguments they expect.
+ *
+ *  @param parserState Pointer to a previously initialized json_parser_state
+ *  @return Zero on success, or nonzero on failure
+ *
+ *  @see JSON_PARSER_OPT
+ */
+int json_parser_setopt(json_parser_state* parserState, JSON_PARSER_OPT opt, ...);
+
 /**
  *  @brief Initialize the parser instance
  *

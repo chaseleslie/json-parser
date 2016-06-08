@@ -97,6 +97,21 @@ typedef enum JSON_TOKEN {
  */
 extern const char JSON_TOKEN_NAMES[];
 
+/**
+ *  @brief JSON parser options
+ *
+ *  Types to set parser options with calls to json_parser_setopt(). Each
+ *  opt description is followed by the expected C type and default value
+ *  in parenthesis.
+ */
+typedef enum JSON_PARSER_OPT {
+	/*! The max nested depth allowed in JSON text source; int (128) */
+	json_max_nested_level = 0,
+	/*! The stream to write error messages to or NULL; FILE* (stderr) */
+	json_error_stream,
+	JSON_PARSER_OPT_MAX
+} JSON_PARSER_OPT;
+
 struct json_parser_state;
 typedef struct json_parser_state json_parser_state;
 

@@ -24,9 +24,11 @@
 #include "json_utils.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 
 #ifdef __cplusplus
@@ -43,7 +45,43 @@ static inline int json_parser_add_state(json_parser_state* parserState, int stat
 static inline int json_parser_remove_state(json_parser_state* parserState, int state);
 
 
-//TODO: Accept setting for max nested level from user/caller; enforce max nesting level
+int json_parser_setopt(json_parser_state* parserState, JSON_PARSER_OPT opt, ...) {
+	int retVal = 1;
+	if (opt < 0 || opt >= JSON_PARSER_OPT_MAX || !parserState) {
+		return retVal;
+	}
+	
+	va_list args;
+	va_start(args, opt);
+	
+	switch (opt) {
+		case json_max_nested_level: {
+			int maxLvl = va_arg(args, int);
+			if (maxLvl > 0) {
+				parserState->maxNestedLevel = maxLvl;
+			} else {
+				parserState->maxNestedLevel = JSON_MAX_NESTED_DEFAULT;
+			}
+		}
+		break;
+		case json_error_stream: {
+			parserState->errorStream = va_arg(args, FILE*);
+		}
+		break;
+		default:
+		case JSON_PARSER_OPT_MAX:
+			va_end(args);
+			return retVal;
+		break;
+	}
+	
+	va_end(args);
+	
+	retVal = 0;
+	return retVal;
+}
+
+//TODO: Enforce max nesting level
 json_parser_state* json_parser_init(alloc_function allocFunction, free_function freeFunction) {
 	json_allocator* JSON_Allocator;
 	json_factory* JSON_Factory;
@@ -60,6 +98,7 @@ json_parser_state* json_parser_init(alloc_function allocFunction, free_function 
 	parserState->state = init_state;
 	parserState->nestedLevel = 0;
 	parserState->maxNestedLevel = JSON_MAX_NESTED_DEFAULT;
+	parserState->errorStream = stderr;
 	
 	return parserState;
 }
