@@ -233,7 +233,9 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		}
 		break;
 		case 't': {
-			if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[true_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
+			const size_t jsonStrPos = parserState->jsonStrPos;
+			const char* jsonStr = parserState->jsonStr + jsonStrPos;
+			if (parserState->jsonStrLength >= (jsonStrPos + 4) && strstr(jsonStr, JSON_VALUE_NAMES[true_value]) == jsonStr) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, true_value, NULL, unspecified_value, NULL);
 				if (!val) {
 					json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
@@ -253,7 +255,9 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		}
 		break;
 		case 'f': {
-			if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[false_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
+			const size_t jsonStrPos = parserState->jsonStrPos;
+			const char* jsonStr = parserState->jsonStr + jsonStrPos;
+			if (parserState->jsonStrLength >= (jsonStrPos + 5) && strstr(jsonStr, JSON_VALUE_NAMES[false_value]) == jsonStr) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, false_value, NULL, unspecified_value, NULL);
 				if (!val) {
 					json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
@@ -273,7 +277,9 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		}
 		break;
 		case 'n': {
-			if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[null_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
+			const size_t jsonStrPos = parserState->jsonStrPos;
+			const char* jsonStr = parserState->jsonStr + jsonStrPos;
+			if (parserState->jsonStrLength >= (jsonStrPos + 4) && strstr(jsonStr, JSON_VALUE_NAMES[null_value]) == jsonStr) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, null_value, NULL, unspecified_value, NULL);
 				if (!val) {
 					json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
