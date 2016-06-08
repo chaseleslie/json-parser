@@ -232,7 +232,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 			val->value = str;
 		}
 		break;
-		default: {
+		case 't': {
 			if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[true_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, true_value, NULL, unspecified_value, NULL);
 				if (!val) {
@@ -246,7 +246,14 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 					return NULL;
 				}
 				val->value = tru;
-			} else if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[false_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
+			} else {
+				json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
+				return NULL;
+			}
+		}
+		break;
+		case 'f': {
+			if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[false_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, false_value, NULL, unspecified_value, NULL);
 				if (!val) {
 					json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
@@ -259,7 +266,14 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 					return NULL;
 				}
 				val->value = fals;
-			} else if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[null_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
+			} else {
+				json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
+				return NULL;
+			}
+		}
+		break;
+		case 'n': {
+			if (strstr(parserState->jsonStr + parserState->jsonStrPos, JSON_VALUE_NAMES[null_value]) == (parserState->jsonStr + parserState->jsonStrPos)) {
 				val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, null_value, NULL, unspecified_value, NULL);
 				if (!val) {
 					json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
@@ -275,8 +289,12 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 			} else {
 				json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
 				return NULL;
-				//TODO: handle error case
 			}
+		}
+		break;
+		default: {
+			json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
+			return NULL;
 		}
 		break;
 	}
