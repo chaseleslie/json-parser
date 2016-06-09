@@ -18,12 +18,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 static void exit_failure(int ret) {
 	exit(ret);
 }
 
-static int test_stdin() {
+static int test_stdin(int shouldPass) {
 	int retVal = 1;
 	
 	size_t buffIncr = 4096;
@@ -84,12 +85,23 @@ static int test_stdin() {
 	json_value* topVal = json_parser_parse(parserState, buff, bytesReadTotal);
 	if (!topVal) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse()\n");
-		exit_failure(retVal);
+		if (shouldPass) {
+			fprintf(stdout, "%s", "FAIL:\tjson_parser_parse()\n");
+			exit_failure(retVal);
+		} else {
+			fprintf(stdout, "%s", "XFAIL:\tjson_parser_parse()\n");
+		}
 	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_parser_init(): parser state != complete\n");
+		const char* failStr = shouldPass ? "FAIL" : "XFAIL";
+		fprintf(stdout, "%s%s", failStr, ":\tjson_parser_init(): parser state != complete\n");
 		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		if (shouldPass) {
+			exit_failure(retVal);
+		}
+	} else if (topVal && !shouldPass) {
+		retVal = shouldPass;
+		fprintf(stdout, "%s", "XPASS:\tjson_parser_init()\n");
 		exit_failure(retVal);
 	}
 	
@@ -99,8 +111,12 @@ static int test_stdin() {
 }
 
 int main(int argc, char** argv) {
-	if (argc > 1 && !strncmp("--stdin", argv[1], 7)) {
-		return test_stdin();
+	if (argc > 2 && !strncmp("--stdin", argv[1], 7)) {
+		if (!strncmp("PASS", argv[2], 4)) {
+			return test_stdin(1);
+		} else {
+			return test_stdin(0);
+		}
 	}
 	
 	int retVal = 0;

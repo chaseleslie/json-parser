@@ -14,19 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#Test parsing general JSON string
+#Test parsing empty string
 
 
-JSON_STR=$(cat <<'EOF'
-	{
-		"obj": {
-			"arr": [
-				1.0e10, null, true, false, "Some string here"
-			]
-		}
-	}
-EOF
-)
+JSON_STR=$'\0'
 
-printf "$JSON_STR" | ./test_libjson --stdin PASS
+printf "$JSON_STR" | ./test_libjson --stdin FAIL
 exit $?
