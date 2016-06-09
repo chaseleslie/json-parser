@@ -33,6 +33,95 @@ if $?; then
 	exit $?
 fi
 
+HAVE_VALGRIND_IN_PATH=$(command -v valgrind >/dev/null 2>&1 && printf yes || printf 'no')
+if [ "$HAVE_VALGRIND_IN_PATH" = "yes" ]; then
+	libtool --mode=execute valgrind ./test_libjson --stdin PASS < printf "$JSON_STR"
+	if $?; then
+		exit $?
+	fi
+fi
+
 #Test parsing empty string
 printf "\0" | ./test_libjson --stdin FAIL
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel object
+JSON_STR=$(cat <<'EOF'
+	{}
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel array
+JSON_STR=$(cat <<'EOF'
+	[]
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel number
+JSON_STR=$(cat <<'EOF'
+	3.14159
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel string
+JSON_STR=$(cat <<'EOF'
+	"Some\u0020string\u0020here."
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel false
+JSON_STR=$(cat <<'EOF'
+	false
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel null
+JSON_STR=$(cat <<'EOF'
+	null
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Parse toplevel true
+JSON_STR=$(cat <<'EOF'
+	true
+EOF
+)
+
+printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
 exit $?
