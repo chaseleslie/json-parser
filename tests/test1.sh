@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#Test parsing general JSON string
+#Test parsing general JSON strings
 
-
+#General JSON text test
 JSON_STR=$(cat <<'EOF'
 	{
 		"obj": {
@@ -29,4 +29,10 @@ EOF
 )
 
 printf "$JSON_STR" | ./test_libjson --stdin PASS
+if $?; then
+	exit $?
+fi
+
+#Test parsing empty string
+printf "\0" | ./test_libjson --stdin FAIL
 exit $?
