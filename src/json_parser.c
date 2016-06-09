@@ -39,6 +39,7 @@ extern "C" {
 const size_t JSON_MAX_NESTED_DEFAULT = 128;
 
 static void json_parser_skip_ws(json_parser_state* parserState);
+static bool json_parser_expect(json_parser_state* parserState, const char c, const char* err);
 
 static inline int json_parser_check_state(json_parser_state* parserState, int state);
 static inline int json_parser_add_state(json_parser_state* parserState, int state);
@@ -155,11 +156,19 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 	json_value* val = NULL;
 	
 	json_parser_skip_ws(parserState);
+	if (!json_parser_expect(parserState, 0, "json_parser:%u:%u Error: Expecting value\n")) {
+		json_parser_add_state(parserState, error_state);
+		return NULL;
+	}
 	
 	switch (parserState->jsonStr[parserState->jsonStrPos]) {
 		case '{': {
 			parserState->jsonStrPos += 1;
 			parserState->nestedLevel += 1;
+			if (!json_parser_expect(parserState, 0, "json_parser:%u:%u Error: Expecting '}' or value\n")) {
+				json_parser_add_state(parserState, error_state);
+				return NULL;
+			}
 			val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, object_value, NULL, unspecified_value, NULL);
 			if (!val) {
 				json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
@@ -182,6 +191,10 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		case '[': {
 			parserState->jsonStrPos += 1;
 			parserState->nestedLevel += 1;
+			if (!json_parser_expect(parserState, 0, "json_parser:%u:%u Error: Expecting ']' or value\n")) {
+				json_parser_add_state(parserState, error_state);
+				return NULL;
+			}
 			val = parserState->JSON_Factory->new_json_value(parserState->JSON_Factory, array_value, NULL, unspecified_value, NULL);
 			if (!val) {
 				json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_value\n", parserState);
@@ -342,44 +355,41 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 	do {
 		//Parse Pair: json_string ':' json_value
 		json_parser_skip_ws(parserState);
-		if (parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_quote]) {
-			parserState->jsonStrPos += 1;
-			
-			json_string* str = json_parser_parse_string(parserState, NULL);
-			if (!str) {
-				return obj;
-			}
-			
-			json_parser_skip_ws(parserState);
-			if (parserState->jsonStr[parserState->jsonStrPos] != JSON_TOKEN_NAMES[json_token_colon]) {
-				json_error_lineno("json_parser:%u:%u Expecting ':'\n", parserState);
-				json_parser_add_state(parserState, error_state);
-				parserState->JSON_Allocator->free(str);
-				return obj;
-			}
-			parserState->jsonStrPos += 1;
-			json_parser_skip_ws(parserState);
-			
-			json_value* value = json_parser_parse_value(parserState, obj, object_value);
-			if (!value) {
-				json_parser_add_state(parserState, error_state);
-				parserState->JSON_Allocator->free(str);
-				return obj;
-			}
-			
-			size_t ret = json_object_add_pair(parserState->JSON_Factory, obj, str, value);
-			if (!ret) {
-				json_error_lineno("json_parser:%u:%u Error: json_object_add_pair()\n", parserState);
-				json_parser_add_state(parserState, error_state);
-				return obj;
-			}
-			
-			json_parser_skip_ws(parserState);
-		} else {
-			json_error_lineno("json_parser:%u:%u Expecting '\"'\n", parserState);
+		if (!json_parser_expect(parserState, '"', "json_parser:%u:%u Error: Expecting '\"'\n")) {
 			json_parser_add_state(parserState, error_state);
 			return obj;
 		}
+		parserState->jsonStrPos += 1;
+		
+		json_string* str = json_parser_parse_string(parserState, NULL);
+		if (!str) {
+			return obj;
+		}
+		
+		json_parser_skip_ws(parserState);
+		if (!json_parser_expect(parserState, ':', "json_parser:%u:%u Expecting ':'\n")) {
+			json_parser_add_state(parserState, error_state);
+			parserState->JSON_Allocator->free(str);
+			return obj;
+		}
+		parserState->jsonStrPos += 1;
+		json_parser_skip_ws(parserState);
+		
+		json_value* value = json_parser_parse_value(parserState, obj, object_value);
+		if (!value) {
+			json_parser_add_state(parserState, error_state);
+			parserState->JSON_Allocator->free(str);
+			return obj;
+		}
+		
+		size_t ret = json_object_add_pair(parserState->JSON_Factory, obj, str, value);
+		if (!ret) {
+			json_error_lineno("json_parser:%u:%u Error: json_object_add_pair()\n", parserState);
+			json_parser_add_state(parserState, error_state);
+			return obj;
+		}
+		
+		json_parser_skip_ws(parserState);
 	} while (
 		parserState->jsonStrPos < parserState->jsonStrLength
 		&& parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_comma]
@@ -387,8 +397,7 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 	);
 	
 	json_parser_skip_ws(parserState);
-	if (parserState->jsonStr[parserState->jsonStrPos] != JSON_TOKEN_NAMES[json_token_rbrace]) {
-		json_error_lineno("json_parser:%u:%u Expected '}'\n", parserState);
+	if (!json_parser_expect(parserState, '}', "json_parser:%u:%u Expecting '}'\n")) {
 		json_parser_add_state(parserState, error_state);
 		return obj;
 	}
@@ -426,7 +435,7 @@ json_array* json_parser_parse_array(json_parser_state* parserState, json_value* 
 		
 		json_value* val = json_parser_parse_value(parserState, arr, array_value);
 		if (!val) {
-			json_error_lineno("json_parser:%u:%u Expecting number\n", parserState);
+			json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return arr;
 		}
@@ -446,8 +455,7 @@ json_array* json_parser_parse_array(json_parser_state* parserState, json_value* 
 	);
 	
 	json_parser_skip_ws(parserState);
-	if (parserState->jsonStr[parserState->jsonStrPos] != JSON_TOKEN_NAMES[json_token_rbrack]) {
-		json_error_lineno("json_parser:%u:%u Expected ']'\n", parserState);
+	if (!json_parser_expect(parserState, ']', "json_parser:%u:%u Expecting ']'\n")) {
 		json_parser_add_state(parserState, error_state);
 		return arr;
 	}
@@ -559,6 +567,15 @@ static void json_parser_skip_ws(json_parser_state* parserState) {
 	while (parserState->jsonStrPos < parserState->jsonStrLength && isspace(parserState->jsonStr[parserState->jsonStrPos])) {
 		parserState->jsonStrPos += 1;
 	}
+}
+
+//Pass nul byte for c to not check the char, just compare pos to len
+static bool json_parser_expect(json_parser_state* parserState, const char c, const char* err) {
+	if (!(parserState->jsonStrPos < parserState->jsonStrLength) || (c && parserState->jsonStr[parserState->jsonStrPos] != c)) {
+		json_error_lineno(err, parserState);
+		return false;
+	}
+	return true;
 }
 
 //Returns true if parserState contains the given state, false otherwise
