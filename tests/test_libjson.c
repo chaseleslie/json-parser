@@ -122,12 +122,12 @@ int main(int argc, char** argv) {
 	int retVal = 0;
 	const char* jsonStr = (
 		"{"
-		"\"obj\": {\"arr\": [1,2,3]},"
-		"\"str\": \"Some string here.\","
-		"\"num\": 3.1415926535897932,"
-		"\"tru\": true,"
-		"\"fals\": false,"
-		"\"nul\": null"
+			"\"obj\": {\"arr\": [1,2,3]},"
+			"\"str\": \"Some string here.\","
+			"\"num\": 3.1415926535897932,"
+			"\"tru\": true,"
+			"\"fals\": false,"
+			"\"nul\": null"
 		"}"
 	);
 	const size_t jsonStrLen = strlen(jsonStr);
@@ -187,6 +187,31 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	
+	/* Test setting option json_max_nested_level */
+	topVal = NULL;
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	retVal = json_parser_setopt(parserState, json_max_nested_level, 1);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\json_parser_setopt()\n");
+		exit_failure(retVal);
+	}
+	topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
+	if (topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with opt json_max_nested_level == 1\n");
+		retVal = json_visitor_free_all(parserState, topVal);
+		if (retVal) {
+			fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_value()\n");
+		}
+		exit_failure(retVal);
+	}
+	
 	/* Test unescape string to UTF-8 */
 	const char* escapedStr = "Some\\uD834\\uDD1EString";
 	const size_t escapedStrLen = strlen(escapedStr);
@@ -195,7 +220,7 @@ int main(int argc, char** argv) {
 		retVal = 99;
 		fprintf(stdout, "%s", "ERROR:\tjson_utils_unescape_string()\n");
 		exit_failure(retVal);
-	} else if (strncmp("Some\xF0\x9D\x84\x9EString", unescapedStr, 12)) {
+	} else if (strncmp("Some""\xF0\x9D\x84\x9E""String", unescapedStr, 12)) {
 		retVal = 1;
 		fprintf(stdout, "%s", "FAIL:\tjson_utils_unescape_string(): invalid unescape of UTF-16 surrogate pair\n");
 		exit_failure(retVal);

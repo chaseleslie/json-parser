@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#Test parsing general JSON strings
+#Test parsing general JSON texts
 
 #General JSON text test
 JSON_STR=$(cat <<'EOF'
@@ -33,9 +33,10 @@ if $?; then
 	exit $?
 fi
 
-HAVE_VALGRIND_IN_PATH=$(command -v valgrind >/dev/null 2>&1 && printf yes || printf 'no')
+#Memcheck with valgrind
+HAVE_VALGRIND_IN_PATH=$(command -v valgrind >/dev/null 2>&1 && printf 'yes' || printf 'no')
 if [ "$HAVE_VALGRIND_IN_PATH" = "yes" ]; then
-	libtool --mode=execute valgrind ./test_libjson --stdin PASS < printf "$JSON_STR"
+	libtool --mode=execute valgrind ./.libs/test_libjson --stdin PASS < printf "$JSON_STR"
 	if $?; then
 		exit $?
 	fi
@@ -43,6 +44,12 @@ fi
 
 #Test parsing empty string
 printf "\0" | ./test_libjson --stdin FAIL
+if $?; then
+	exit $?
+fi
+
+#Test parsing invalid control chars in string
+printf "{\"test\": \"An\x00Invalid\x1FString\"}" | ./test_libjson --stdin FAIL
 if $?; then
 	exit $?
 fi
