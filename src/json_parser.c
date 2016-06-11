@@ -82,7 +82,6 @@ int json_parser_setopt(json_parser_state* parserState, JSON_PARSER_OPT opt, ...)
 	return retVal;
 }
 
-//TODO: Enforce max nesting level
 json_parser_state* json_parser_init(alloc_function allocFunction, free_function freeFunction) {
 	json_allocator* JSON_Allocator;
 	json_factory* JSON_Factory;
@@ -164,7 +163,12 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 	switch (parserState->jsonStr[parserState->jsonStrPos]) {
 		case '{': {
 			parserState->jsonStrPos += 1;
-			parserState->nestedLevel += 1;
+			if (parserState->nestedLevel < parserState->maxNestedLevel) {
+				parserState->nestedLevel += 1;
+			} else {
+				json_parser_add_state(parserState, error_state);
+				return NULL;
+			}
 			if (!json_parser_expect(parserState, 0, "json_parser:%u:%u Error: Expecting '}' or value\n")) {
 				json_parser_add_state(parserState, error_state);
 				return NULL;
@@ -190,7 +194,12 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		break;
 		case '[': {
 			parserState->jsonStrPos += 1;
-			parserState->nestedLevel += 1;
+			if (parserState->nestedLevel < parserState->maxNestedLevel) {
+				parserState->nestedLevel += 1;
+			} else {
+				json_parser_add_state(parserState, error_state);
+				return NULL;
+			}
 			if (!json_parser_expect(parserState, 0, "json_parser:%u:%u Error: Expecting ']' or value\n")) {
 				json_parser_add_state(parserState, error_state);
 				return NULL;
@@ -499,6 +508,10 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 				foundEndQuote = true;
 				break;
 			}
+		} else if (parserState->jsonStr[parserState->jsonStrPos] <= 0x1F) {
+			json_error_lineno("json_parser:%u:%u Invalid control character in string\n", parserState);
+			json_parser_add_state(parserState, error_state);
+			return NULL;
 		}
 		parserState->jsonStrPos += 1;
 	}
