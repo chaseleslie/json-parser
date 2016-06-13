@@ -13,8 +13,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef JSON_UTILS_CC
-#define JSON_UTILS_CC
+#ifndef JSON_UTILS_C
+#define JSON_UTILS_C
 
 
 #define JSON_TOP_LVL 1
@@ -250,4 +250,4 @@ static inline char* uni_surrogate_pair_to_utf8_str(uint16_t uni1, uint16_t uni2)
 #endif	//#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_UTILS_CC
+#endif	//#ifndef JSON_UTILS_C

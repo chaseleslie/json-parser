@@ -13,8 +13,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef JSON_TYPES_CC
-#define JSON_TYPES_CC
+#ifndef JSON_TYPES_C
+#define JSON_TYPES_C
 
 
 #define JSON_TOP_LVL 1
@@ -329,62 +329,6 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 	return 1;
 }
 
-//Loop through string:value pairs in the passed object, call iter callback passing object, string and value
-//Returns nonzero if passed object or callback is null, zero otherwise
-//Callback should return truthy value, or zero to stop iterating
-int json_object_foreach(json_value* val, json_object_foreach_cb iter) {
-	int retVal = 1;
-	if (!val || !iter) {
-		return retVal;
-	}
-	
-	if (val->valueType != object_value) {
-		return retVal;
-	}
-	
-	return json_object_foreach_obj(val->value, iter);
-}
-int json_object_foreach_obj(json_object* obj, json_object_foreach_cb iter) {
-	if (!obj || !iter) {
-		return 1;
-	}
-	
-	size_t k = 0, numElems = obj->size;
-	while (k < numElems && iter(obj, obj->names[k], obj->values[k])) {
-		k += 1;
-	}
-	
-	return 0;
-}
-
-//Loop through elements in the passed array, call iter callback passing array and element
-//Returns nonzero if passed array or callback is null, zero otherwise
-//Callback should return truthy value, or zero to stop iterating
-int json_array_foreach(json_value* val, json_array_foreach_cb iter) {
-	int retVal = 1;
-	if (!val || !iter) {
-		return retVal;
-	}
-	
-	if (val->valueType != array_value) {
-		return retVal;
-	}
-	
-	return json_array_foreach_arr(val->value, iter);
-}
-int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter) {
-	if (!arr || !iter) {
-		return 1;
-	}
-	
-	size_t k = 0, numElems = arr->size;
-	while (k < numElems && iter(arr, arr->values[k])) {
-		k += 1;
-	}
-	
-	return 0;
-}
-
 //Convenience function to get a string representing the value
 const char* json_value_get_type(json_value* value) {
 	return (value) ? JSON_VALUE_NAMES[value->valueType] : NULL;
@@ -540,4 +484,4 @@ int json_visitor_free_null(json_factory* jsonFact, json_null* nul) {
 #endif	//#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_TYPES_CC
+#endif	//#ifndef JSON_TYPES_C

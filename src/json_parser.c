@@ -13,8 +13,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef JSON_PARSER_CC
-#define JSON_PARSER_CC
+#ifndef JSON_PARSER_C
+#define JSON_PARSER_C
 
 
 #define JSON_TOP_LVL 1
@@ -618,4 +618,4 @@ const char* json_parser_get_state_string(json_parser_state* parserState) {
 #endif	//#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_PARSER_CC
+#endif	//#ifndef JSON_PARSER_C

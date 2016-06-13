@@ -191,69 +191,6 @@ json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulPar
 size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value);
 size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value);
 
-/*! Prototype for a callback function used with json_object_foreach() */
-typedef int (*json_object_foreach_cb)(json_object*, json_string*, json_value*);
-/*! Prototype for a callback function used with json_array_foreach() */
-typedef int (*json_array_foreach_cb)(json_array*, json_value*);
-
-/*@{ */
-/**
- *  @brief Iterate over all the name/value pairs in an object
- *
- *  This function allows the caller to supply a callback function that will receive the
- *  json_string and json_value of each name/value pair in an object. The callback should
- *  match the prototype for json_object_foreach_cb and return nonzero to keep iterating
- *  or zero to stop.
- *
- *  @param[in] val Pointer to json_value containing the json_object to iterate over
- *  @param[in] iter Callback function to iterate over object
- *  @return Zero on success, nonzero on failure
- *
- *  @see json_object_foreach_cb json_object_foreach_obj()
- */
-int json_object_foreach(json_value* val, json_object_foreach_cb iter);
-/**
- *  @brief Iterate over all the name/value pairs in an object
- *
- *  This function behaves similarly to json_object_foreach(), taking a pointer to a
- *  json_object directly instead of it's containing json_value.
- *
- *  @param[in] obj Pointer to json_object to iterate over
- *  @param[in] iter Callback function to iterate over object
- *  @return Zero on success, nonzero on failure
- *
- *  @see json_object_foreach_cb json_object_foreach()
- */
-int json_object_foreach_obj(json_object* obj, json_object_foreach_cb iter);
-/**
- *  @brief Iterate over all the values in an array
- *
- *  This function allows the caller to supply a callback function that will receive the
- *  json_value of each value in an array. The callback should match the prototype for
- *  json_array_foreach_cb and return nonzero to keep iterating or zero to stop.
- *
- *  @param[in] val Pointer to json_value containing the json_array to iterate over
- *  @param[in] iter Callback function to iterate over array
- *  @return Zero on success, nonzero on failure
- *
- *  @see json_array_foreach_cb json_array_foreach_arr()
- */
-int json_array_foreach(json_value* val, json_array_foreach_cb iter);
-/**
- *  @brief Iterate over all the values in an array
- *
- *  This function behaves similarly to json_array_foreach(), taking a pointer to a
- *  json_array directly instead of it's containing json_value.
- *
- *  @param[in] arr Pointer to json_array to iterate over
- *  @param[in] iter Callback function to iterate over array
- *  @return Zero on success, nonzero on failure
- *
- *  @see json_array_foreach_cb json_array_foreach()
- */
-int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter);
-/*@} */
-
 const char* json_value_get_type(json_value* value);
 
 /*@{ */

@@ -33,6 +33,7 @@
 #include "json_types.h"
 #include "json_parser.h"
 #include "json_utils.h"
+#include "json_introspect.h"
 
 
 #endif	//#ifndef JSON_H
