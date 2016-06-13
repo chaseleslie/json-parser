@@ -81,5 +81,9 @@ int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter) {
 	return 0;
 }
 
+json_value* json_value_query(json_parser_state* parserState, json_value* value, const char* query) {
+	return NULL;
+}
+
 
 #endif	//#ifndef JSON_INTROSPECT_C

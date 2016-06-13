@@ -24,6 +24,67 @@ static void exit_failure(int ret) {
 	exit(ret);
 }
 
+static int test_json_pointer(json_parser_state* parserState) {
+	int retVal = 1;
+	
+	const char* jsonStr = (
+		"{"
+			"\"obj\": {\"arr\": [1,2,3]},"
+			"\"str\": \"Some string here.\","
+			"\"num\": 3.1415926535897932,"
+			"\"tru\": true,"
+			"\"fals\": false,"
+			"\"nul\": null"
+		"}"
+	);
+	const size_t jsonStrLen = strlen(jsonStr);
+	
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	
+	json_value* topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
+	if (!topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse()\n");
+		exit_failure(retVal);
+	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): parser state != complete\n");
+		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		exit_failure(retVal);
+	}
+	
+	json_value* val = json_value_query(parserState, topVal, "/obj/arr/0");
+	if (0) {//TODO replace with code when complete `!val`
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\json_value_query()\n");
+		exit_failure(retVal);
+	} else if (0) {//TODO replace with code when complete `val->valueType != number_value`
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\json_value_query()\n");
+		exit_failure(retVal);
+	}
+	//TODO replace with code when complete `json_number* num = val->value;`
+	if (0) {//TODO replace with code when complete `num->value != 1.0`
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\json_value_query()\n");
+		exit_failure(retVal);
+	}
+	retVal = json_visitor_free_all(parserState, topVal);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all()\n");
+		exit_failure(retVal);
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
 static int test_stdin(int shouldPass) {
 	int retVal = 1;
 	
@@ -157,12 +218,12 @@ int main(int argc, char** argv) {
 	retVal = json_visitor_free_all(parserState, topVal);
 	if (retVal) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_value()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all()\n");
 		exit_failure(retVal);
 	}
+	topVal = NULL;
 	
 	/* Test json_parser_reset() and parsing/freeing again */
-	topVal = NULL;
 	retVal = json_parser_reset(parserState);
 	if (retVal) {
 		retVal = 1;
@@ -183,9 +244,10 @@ int main(int argc, char** argv) {
 	retVal = json_visitor_free_all(parserState, topVal);
 	if (retVal) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_value() after json_parser_reset()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all() after json_parser_reset()\n");
 		exit_failure(retVal);
 	}
+	topVal = NULL;
 	
 	/* Test setting option json_max_nested_level */
 	topVal = NULL;
@@ -207,10 +269,11 @@ int main(int argc, char** argv) {
 		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with opt json_max_nested_level == 1\n");
 		retVal = json_visitor_free_all(parserState, topVal);
 		if (retVal) {
-			fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_value()\n");
+			fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all()\n");
 		}
 		exit_failure(retVal);
 	}
+	topVal = NULL;
 	
 	/* Test unescape string to UTF-8 */
 	const char* escapedStr = "Some\\uD834\\uDD1EString";
@@ -224,6 +287,12 @@ int main(int argc, char** argv) {
 		retVal = 1;
 		fprintf(stdout, "%s", "FAIL:\tjson_utils_unescape_string(): invalid unescape of UTF-16 surrogate pair\n");
 		exit_failure(retVal);
+	}
+	
+	/* Test JSON Pointer query */
+	retVal = test_json_pointer(parserState);
+	if (retVal) {
+		return retVal;
 	}
 	
 	/* Test error reporting */

@@ -98,5 +98,24 @@ int json_array_foreach(json_value* val, json_array_foreach_cb iter);
 int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter);
 /*@} */
 
+/**
+ *  @brief Query a JSON value with JSON Pointer
+ *
+ *  This function uses JSON Pointer syntax to query a JSON value. The
+ *  syntax of JSON pointer is defined in RFC 6901. JSON Pointers can
+ *  query a value that is a child of an object or array. @c NULL will be
+ *  returned if @p value doesn't reference a json_object or json_array,
+ *  if there is an error or if the referenced value is not found. Otherwise,
+ *  a pointer to the referenced json_value is returned.
+ *
+ *  @param parserState A pointer to the parser isntance
+ *  @param value A pointer to the json_value to query from
+ *  @param query A C string containing the query
+ *  @return A pointer to the referenced json_value, or @c NULL on failure
+ *
+ *  @see https://tools.ietf.org/html/rfc6901
+ */
+ json_value* json_value_query(json_parser_state* parserState, json_value* value, const char* query);
+
 
 #endif	//#ifndef JSON_INTROSPECT_H
