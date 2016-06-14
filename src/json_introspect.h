@@ -108,14 +108,24 @@ int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter);
  *  if there is an error or if the referenced value is not found. Otherwise,
  *  a pointer to the referenced json_value is returned.
  *
+ *  Since JSON Pointer can contain reference tokens that consist of
+ *  control characters, the length of the query string must be passed
+ *  to accomodate the null Unicode character.
+ *
  *  @param parserState A pointer to the parser isntance
  *  @param value A pointer to the json_value to query from
  *  @param query A C string containing the query
+ *  @param queryLen Length of the query string @p query
  *  @return A pointer to the referenced json_value, or @c NULL on failure
  *
  *  @see https://tools.ietf.org/html/rfc6901
  */
- json_value* json_value_query(json_parser_state* parserState, json_value* value, const char* query);
+ json_value* json_value_query(
+	json_parser_state* parserState,
+	json_value* value,
+	const char* query,
+	const size_t queryLen
+);
 
 
 #endif	//#ifndef JSON_INTROSPECT_H

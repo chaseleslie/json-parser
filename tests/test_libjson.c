@@ -58,20 +58,22 @@ static int test_json_pointer(json_parser_state* parserState) {
 		exit_failure(retVal);
 	}
 	
-	json_value* val = json_value_query(parserState, topVal, "/obj/arr/0");
-	if (0) {//TODO replace with code when complete `!val`
+	const char* query = "/obj/arr/0";
+	const size_t queryLen = strlen(query);
+	json_value* val = json_value_query(parserState, topVal, query, queryLen);
+	if (!val) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\json_value_query()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query()\n");
 		exit_failure(retVal);
-	} else if (0) {//TODO replace with code when complete `val->valueType != number_value`
+	} else if (val->valueType != number_value) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\json_value_query()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query()\n");
 		exit_failure(retVal);
 	}
-	//TODO replace with code when complete `json_number* num = val->value;`
-	if (0) {//TODO replace with code when complete `num->value != 1.0`
+	json_number* num = val->value;
+	if (num->value != 1.0) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\json_value_query()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query()\n");
 		exit_failure(retVal);
 	}
 	retVal = json_visitor_free_all(parserState, topVal);
@@ -250,7 +252,6 @@ int main(int argc, char** argv) {
 	topVal = NULL;
 	
 	/* Test setting option json_max_nested_level */
-	topVal = NULL;
 	retVal = json_parser_reset(parserState);
 	if (retVal) {
 		retVal = 1;
@@ -260,7 +261,7 @@ int main(int argc, char** argv) {
 	retVal = json_parser_setopt(parserState, json_max_nested_level, 1);
 	if (retVal) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\json_parser_setopt()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_setopt()\n");
 		exit_failure(retVal);
 	}
 	topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
