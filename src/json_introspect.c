@@ -286,7 +286,7 @@ json_value* json_value_query(
 						}
 						digits[tokenLen] = 0;
 						long index = strtol(digits, &ptr, 10);
-						if (!index || index >= arr->size) {
+						if (!index || index >= arr->size || (ptr - token->token + 1) != tokenLen) {
 							err = 1;
 							val = NULL;
 						} else {
