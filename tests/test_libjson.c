@@ -279,7 +279,8 @@ int main(int argc, char** argv) {
 	/* Test unescape string to UTF-8 */
 	const char* escapedStr = "Some\\uD834\\uDD1EString";
 	const size_t escapedStrLen = strlen(escapedStr);
-	const char* unescapedStr = json_utils_unescape_string(parserState, escapedStr, escapedStrLen, &retVal);
+	size_t unescapedStrLen = 0;
+	const char* unescapedStr = json_utils_unescape_string(parserState, escapedStr, escapedStrLen, &retVal, &unescapedStrLen);
 	if (!unescapedStr || retVal) {
 		retVal = 99;
 		fprintf(stdout, "%s", "ERROR:\tjson_utils_unescape_string()\n");

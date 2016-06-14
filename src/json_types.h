@@ -175,7 +175,7 @@ json_object* json_factory_new_json_object(json_factory* jsonFact, json_value* ob
 /*! Returns a new json_value */
 json_value* json_factory_new_json_value(json_factory* jsonFact, JSON_VALUE valValueType, void* valValue, JSON_VALUE valParentValueType, void* valParentValue);
 /*! Returns a new json_string */
-json_string* json_factory_new_json_string(json_factory* jsonFact, const char* strValue, json_value* strParentValue);
+json_string* json_factory_new_json_string(json_factory* jsonFact, const char* strValue, size_t strValueLen, json_value* strParentValue);
 /*! Returns a new json_number */
 json_number* json_factory_new_json_number(json_factory* jsonFact, double numValue, json_value* numParentValue);
 /*! Returns a new json_array */
@@ -231,7 +231,7 @@ typedef struct json_factory {
 	/*! Returns a new json_value */
 	json_value* (*new_json_value)(json_factory* jsonFact, JSON_VALUE valValueType, void* valValue, JSON_VALUE valParentValueType, void* valParentValue);
 	/*! Returns a new json_string */
-	json_string* (*new_json_string)(json_factory* jsonFact, const char* strValue, json_value* strParentValue);
+	json_string* (*new_json_string)(json_factory* jsonFact, const char* strValue, size_t strValueLen, json_value* strParentValue);
 	/*! Returns a new json_number */
 	json_number* (*new_json_number)(json_factory* jsonFact, double numValue, json_value* numParentValue);
 	/*! Returns a new json_array */
@@ -306,8 +306,10 @@ typedef struct json_value {
  */
 typedef struct json_string {
 	/*@{ */
-	/*! Pointer to C-string representing UTF-8 encoded text of JSON string */
+	/*! Pointer to string representing UTF-8 encoded text of JSON string */
 	const char* value;
+	/*! Length of @p value */
+	size_t valueLen;
 	/*@} */
 	
 	/*@{ */

@@ -78,9 +78,10 @@ void json_error_lineno(const char* err, json_parser_state* parserState) {
 //Unescape the passed json string of given size to a null-terminated UTF-8 string
 //Allocates the returned string from JSON_Allocator::malloc
 //TODO: Check that all UTF-16 surrogate pairs are properly encoded to UTF-8
-char* json_utils_unescape_string(json_parser_state* parserState, const char* str, size_t n, int* ret) {
+char* json_utils_unescape_string(json_parser_state* parserState, const char* str, size_t n, int* ret, size_t* unescapedLen) {
 	char* unescaped = NULL;
 	*ret = 1;
+	*unescapedLen = 0;
 	if (!str || !n) {
 		unescaped = (char*) parserState->JSON_Allocator->malloc( sizeof(char) );
 		if (unescaped) {
@@ -94,6 +95,7 @@ char* json_utils_unescape_string(json_parser_state* parserState, const char* str
 	if (!unescaped) {
 		return unescaped;
 	}
+	*unescapedLen = n;
 	
 	size_t j = 0, k = 0;
 	
@@ -183,6 +185,7 @@ char* json_utils_unescape_string(json_parser_state* parserState, const char* str
 	unescaped[j] = 0;
 	
 	*ret = 0;
+	*unescapedLen = j;
 	return unescaped;
 }
 

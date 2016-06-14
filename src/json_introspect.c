@@ -304,23 +304,28 @@ json_value* json_value_query(
 			}
 		} else if (val->valueType == object_value) {
 			json_object* obj = val->value;
+			bool matched = false;
 			for (size_t iK = 0, numNames = obj->size; iK < numNames; iK += 1) {
 				const char* ptr = obj->names[iK]->value;
-				bool matched = true;
-				for (size_t n = 0; n < token->tokenLen && ptr[n]; n += 1) {
-					if (ptr[n] != token->token[n]) {
-						matched = false;
-						break;
+				const size_t ptrLen = obj->names[iK]->valueLen;
+				
+				if (token->tokenLen == ptrLen) {
+					for (size_t n = 0; n < token->tokenLen && n < ptrLen; n += 1) {
+						if (ptr[n] != token->token[n]) {
+							continue;
+						}
 					}
+				} else {
+					continue;
 				}
 				
-				if (matched) {
-					val = obj->values[iK];
-					break;
-				} else {
-					err = 1;
-					val = NULL;
-				}
+				matched = true;
+				val = obj->values[iK];
+				break;
+			}
+			if (!matched) {
+				err = 1;
+				val = NULL;
 			}
 		} else {
 			err = 1;

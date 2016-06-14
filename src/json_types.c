@@ -181,13 +181,14 @@ json_value* json_factory_new_json_value(json_factory* jsonFact, JSON_VALUE valVa
 	
 	return value;
 }
-json_string* json_factory_new_json_string(json_factory* jsonFact, const char* strValue, json_value* strParentValue) {
+json_string* json_factory_new_json_string(json_factory* jsonFact, const char* strValue, size_t strValueLen, json_value* strParentValue) {
 	json_string* str = (json_string*) jsonFact->allocator->malloc( sizeof(json_string) );
 	if (!str) {
 		return NULL;
 	}
 	
 	str->value = strValue;
+	str->valueLen = strValueLen;
 	str->parentValue = strParentValue;
 	
 	return str;

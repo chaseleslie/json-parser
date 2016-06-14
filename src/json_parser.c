@@ -523,15 +523,16 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 	}
 	
 	size_t dataLen = parserState->jsonStrPos - startPos;
-	int ret;
-	char* data = json_utils_unescape_string(parserState, parserState->jsonStr + startPos, dataLen, &ret);
+	int ret = 0;
+	size_t unescapedLen = 0;
+	char* data = json_utils_unescape_string(parserState, parserState->jsonStr + startPos, dataLen, &ret, &unescapedLen);
 	if (!data || ret) {
 		json_error_lineno("json_parser:%u:%u Error: json_utils_unescape_string()", parserState);
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
 	
-	str = parserState->JSON_Factory->new_json_string(parserState->JSON_Factory, data, parentValue);
+	str = parserState->JSON_Factory->new_json_string(parserState->JSON_Factory, data, unescapedLen, parentValue);
 	if (!str) {
 		json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_string\n", parserState);
 		json_parser_add_state(parserState, error_state);
