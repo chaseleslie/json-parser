@@ -524,7 +524,7 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 	
 	size_t dataLen = parserState->jsonStrPos - startPos;
 	int ret;
-	char* data = json_utils_unescape_string(parserState, parserState->jsonStr, dataLen, &ret);
+	char* data = json_utils_unescape_string(parserState, parserState->jsonStr + startPos, dataLen, &ret);
 	if (!data || ret) {
 		json_error_lineno("json_parser:%u:%u Error: json_utils_unescape_string()", parserState);
 		json_parser_add_state(parserState, error_state);
