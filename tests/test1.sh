@@ -36,7 +36,7 @@ fi
 #Memcheck with valgrind
 HAVE_VALGRIND_IN_PATH=$(command -v valgrind >/dev/null 2>&1 && printf 'yes' || printf 'no')
 if [ "$HAVE_VALGRIND_IN_PATH" = "yes" ]; then
-	libtool --mode=execute valgrind ./.libs/test_libjson --stdin PASS < printf "$JSON_STR"
+	libtool --mode=execute valgrind ./.libs/test_libjson
 	if $?; then
 		exit $?
 	fi
