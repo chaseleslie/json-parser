@@ -51,9 +51,9 @@ static char uni_buffer[16];
 
 
 static inline uint16_t uni_str_to_num(const char* str);
-static char* uni_num_to_utf8_str(uint32_t uni);
+static char* uni_num_to_utf8_str(uint32_t uni, size_t* numBytes);
 static inline int uni_is_valid_surrogate_pair(uint16_t uni1, uint16_t uni2);
-static inline char* uni_surrogate_pair_to_utf8_str(uint16_t uni1, uint16_t uni2);
+static inline char* uni_surrogate_pair_to_utf8_str(uint16_t uni1, uint16_t uni2, size_t* numBytes);
 
 
 void json_error(const char* err) {
@@ -141,6 +141,8 @@ char* json_utils_unescape_string(json_parser_state* parserState, const char* str
 					) {
 						return unescaped;
 					}
+					
+					size_t numBytes = 0;
 					if (//This escape sequence and the following form a valid surrogate pair
 						(k + 11 <= n)
 						&& (str[k + 6] == '\\')
@@ -153,17 +155,18 @@ char* json_utils_unescape_string(json_parser_state* parserState, const char* str
 						&& (uni2 = uni_str_to_num(str + k + 8))
 						&& uni_is_valid_surrogate_pair(uni1, uni2)
 					) {
-						uniBuff = uni_surrogate_pair_to_utf8_str(uni1, uni2);
+						uniBuff = uni_surrogate_pair_to_utf8_str(uni1, uni2, &numBytes);
 						isSurrogatePair = 1;
 					} else {//Single unicode escape sequence
 						uni1 = uni_str_to_num(str + k + 2);
-						uniBuff = uni_num_to_utf8_str(uni1);
+						uniBuff = uni_num_to_utf8_str(uni1, &numBytes);
 					}
 					
-					while (*uniBuff) {
-						unescaped[j] = *uniBuff;
+					size_t m = 0;
+					while (m < numBytes) {
+						unescaped[j] = uniBuff[m];
 						j += 1;
-						uniBuff += 1;
+						m += 1;
 					}
 					k += (isSurrogatePair) ? 12 : 6;
 					continue;
@@ -200,7 +203,7 @@ static inline uint16_t uni_str_to_num(const char* str) {
 }
 
 //Returns a UTF-8 encoded string from the given 32 bit integer
-static char* uni_num_to_utf8_str(uint32_t uni) {
+static char* uni_num_to_utf8_str(uint32_t uni, size_t* numBytes) {
 	size_t pos = 0;
 	if (uni < 0x80) {
 		uni_buffer[pos] = uni;
@@ -228,6 +231,9 @@ static char* uni_num_to_utf8_str(uint32_t uni) {
 		pos += 1;
 	}
 	uni_buffer[pos] = 0;
+	if (numBytes) {
+		*numBytes = pos;
+	}
 	return uni_buffer;
 }
 
@@ -239,11 +245,12 @@ static inline int uni_is_valid_surrogate_pair(uint16_t uni1, uint16_t uni2) {
 	);
 }
 //Returns a UTF-8 encoded string from the surrogate pair in the two given 16 bit integers
-static inline char* uni_surrogate_pair_to_utf8_str(uint16_t uni1, uint16_t uni2) {
+static inline char* uni_surrogate_pair_to_utf8_str(uint16_t uni1, uint16_t uni2, size_t* numBytes) {
 	return uni_num_to_utf8_str(
 		((uni1 & 0x3FF) << 10)
 		+ (uni2 & 0x3FF)
-		+ 0x10000
+		+ 0x10000,
+		numBytes
 	);
 }
 
