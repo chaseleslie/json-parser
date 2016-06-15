@@ -216,6 +216,82 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	
+	json_object* obj = topVal->value;
+	if (topVal->valueType != object_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top value not an object\n");
+		exit_failure(retVal);
+	} else if (!obj || obj->size != 6) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (obj->names[0]->valueLen != 3 || strncmp(obj->names[0]->value, "obj", 3)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object names incorrect\n");
+		exit_failure(retVal);
+	} else if (obj->names[1]->valueLen != 3 || strncmp(obj->names[1]->value, "str", 3)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object names incorrect\n");
+		exit_failure(retVal);
+	} else if (obj->names[2]->valueLen != 3 || strncmp(obj->names[2]->value, "num", 3)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object names incorrect\n");
+		exit_failure(retVal);
+	} else if (obj->names[3]->valueLen != 3 || strncmp(obj->names[3]->value, "tru", 3)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object names incorrect\n");
+		exit_failure(retVal);
+	} else if (obj->names[4]->valueLen != 4 || strncmp(obj->names[4]->value, "fals", 3)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object names incorrect\n");
+		exit_failure(retVal);
+	} else if (obj->names[5]->valueLen != 3 || strncmp(obj->names[5]->value, "nul", 3)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): top object names incorrect\n");
+		exit_failure(retVal);
+	}
+	json_object* obj2 = obj->values[0]->value;
+	if (obj->values[0]->valueType != object_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): nested object parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (!obj2 || obj2->size != 1) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): nested object parsed incorrectly\n");
+		exit_failure(retVal);
+	}
+	json_array* arr = obj2->values[0]->value;
+	if (obj2->names[0]->valueLen != 3 || strncmp(obj2->names[0]->value, "arr", 3) || obj2->values[0]->valueType != array_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): nested object parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (!arr || arr->size != 3) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): array parsed incorrectly\n");
+		exit_failure(retVal);
+	}
+	if (obj->values[1]->valueType != string_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): string parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (obj->values[2]->valueType != number_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): number parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (obj->values[3]->valueType != true_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): true parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (obj->values[4]->valueType != false_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): false parsed incorrectly\n");
+		exit_failure(retVal);
+	} else if (obj->values[5]->valueType != null_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): null parsed incorrectly\n");
+		exit_failure(retVal);
+	}
+	
 	/* Test json_visitor_free_all() with default alloc */
 	retVal = json_visitor_free_all(parserState, topVal);
 	if (retVal) {
@@ -250,6 +326,47 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	topVal = NULL;
+	
+	/* Test handling escaped control chars in strings */
+	const char* jsonStr2 = "{\"bad\\u0000wolf\": 1}";
+	const size_t jsonStr2Len = strlen(jsonStr2);
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	topVal = json_parser_parse(parserState, jsonStr2, jsonStr2Len);
+	if (!topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() after json_parser_reset()\n");
+		exit_failure(retVal);
+	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() after json_parser_reset(): parser state != complete\n");
+		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		exit_failure(retVal);
+	}
+	json_object* obj3 = topVal->value;
+	if (topVal->valueType != object_value || !obj3) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): handle control chars in strings (1)\n");
+		exit_failure(retVal);
+	} else if (obj3->names[0]->valueLen != 8 || memcmp(obj3->names[0]->value, "bad\000wolf", 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): handle control chars in strings (2)\n");
+		fprintf(stdout, "\tstr len:\t%zu\n", obj3->names[0]->valueLen);
+		fprintf(stdout, "\tstr:\t%s\n", obj3->names[0]->value);
+		exit_failure(retVal);
+	}
+	retVal = json_visitor_free_all(parserState, topVal);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all() after json_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	topVal = NULL;
+	
 	
 	/* Test setting option json_max_nested_level */
 	retVal = json_parser_reset(parserState);
