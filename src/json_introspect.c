@@ -26,6 +26,7 @@
 #include "json_parser.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#include <limits.h>
 
 
 //Loop through string:value pairs in the passed object, call iter callback passing object, string and value
@@ -279,14 +280,14 @@ json_value* json_value_query(
 					case '7':
 					case '8':
 					case '9': {
-						const char* ptr = token->token;
+						char* ptr = token->token;
 						const size_t tokenLen = token->tokenLen;
 						for (size_t iK = 0; iK < tokenLen; iK += 1) {
 							digits[iK] = ptr[iK];
 						}
 						digits[tokenLen] = 0;
 						long index = strtol(digits, &ptr, 10);
-						if (!index || index >= arr->size || (ptr - token->token + 1) != tokenLen) {
+						if (!index || index == LONG_MAX || index >= arr->size || (ptr - digits) != tokenLen) {
 							err = 1;
 							val = NULL;
 						} else {
