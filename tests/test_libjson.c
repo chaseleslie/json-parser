@@ -34,7 +34,8 @@ static int test_json_pointer(json_parser_state* parserState) {
 			"\"num\": 3.1415926535897932,"
 			"\"tru\": true,"
 			"\"fals\": false,"
-			"\"nul\": null"
+			"\"nul\": null,"
+			"\"bad\\u0000wolf\": 1"
 		"}"
 	);
 	const size_t jsonStrLen = strlen(jsonStr);
@@ -59,23 +60,183 @@ static int test_json_pointer(json_parser_state* parserState) {
 	}
 	
 	const char* query = "/obj/arr/0";
-	const size_t queryLen = strlen(query);
+	size_t queryLen = strlen(query);
 	json_value* val = json_value_query(parserState, topVal, query, queryLen);
 	if (!val) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_value_query()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (1)\n");
 		exit_failure(retVal);
 	} else if (val->valueType != number_value) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_value_query()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (1)\n");
 		exit_failure(retVal);
 	}
 	json_number* num = val->value;
 	if (num->value != 1.0) {
 		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_value_query()\n");
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (1)\n");
 		exit_failure(retVal);
 	}
+	val = NULL;
+	num = NULL;
+	
+	query = "/obj/arr/1";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (2)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != number_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (2)\n");
+		exit_failure(retVal);
+	}
+	num = val->value;
+	if (num->value != 2.0) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (2)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	num = NULL;
+	
+	query = "/obj/arr/2";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (3)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != number_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (3)\n");
+		exit_failure(retVal);
+	}
+	num = val->value;
+	if (num->value != 3.0) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (3)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	num = NULL;
+	
+	query = "/obj/str";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	if (val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (4)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	
+	query = "/str";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	 if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (5)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != string_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (5)\n");
+		exit_failure(retVal);
+	}
+	json_string* str = val->value;
+	if (strncmp(str->value, "Some string here.", 17)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (5)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	str = NULL;
+	
+	query = "/num";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	 if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (6)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != number_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (6)\n");
+		exit_failure(retVal);
+	}
+	num = val->value;
+	if (num->value != 3.1415926535897932) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (6)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	num = NULL;
+	
+	query = "/tru";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	 if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (7)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != true_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (7)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	
+	query = "/fals";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	 if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (8)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != false_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (8)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	
+	query = "/nul";
+	queryLen = strlen(query);
+	val = json_value_query(parserState, topVal, query, queryLen);
+	 if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (9)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != null_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (9)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	
+	const char query2[] = {'/', 'b', 'a', 'd', '\0', 'w', 'o', 'l', 'f'};
+	queryLen = 9;
+	val = json_value_query(parserState, topVal, query2, queryLen);
+	 if (!val) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): error during query (10)\n");
+		exit_failure(retVal);
+	} else if (val->valueType != number_value) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (10)\n");
+		exit_failure(retVal);
+	}
+	num = val->value;
+	if (num->value != 1.0) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_query(): query returned invalid (10)\n");
+		exit_failure(retVal);
+	}
+	val = NULL;
+	num = NULL;
+	
 	retVal = json_visitor_free_all(parserState, topVal);
 	if (retVal) {
 		retVal = 1;
