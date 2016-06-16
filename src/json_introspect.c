@@ -305,16 +305,21 @@ json_value* json_value_query(
 			}
 		} else if (val->valueType == object_value) {
 			json_object* obj = val->value;
-			bool matched = false;
+			bool matched = false;	//Did any obj name match
 			for (size_t iK = 0, numNames = obj->size; iK < numNames; iK += 1) {
 				const char* ptr = obj->names[iK]->value;
 				const size_t ptrLen = obj->names[iK]->valueLen;
+				bool noMatch = false;	//Did this obj name match
 				
 				if (token->tokenLen == ptrLen) {
 					for (size_t n = 0; n < token->tokenLen && n < ptrLen; n += 1) {
 						if (ptr[n] != token->token[n]) {
-							continue;
+							noMatch = true;
+							break;
 						}
+					}
+					if (noMatch) {
+						continue;
 					}
 				} else {
 					continue;
