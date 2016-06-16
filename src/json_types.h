@@ -112,6 +112,8 @@ typedef enum JSON_PARSER_OPT {
 	JSON_PARSER_OPT_MAX
 } JSON_PARSER_OPT;
 
+extern const char* const JSON_EMPTY_STRING;
+
 struct json_parser_state;
 typedef struct json_parser_state json_parser_state;
 

@@ -76,6 +76,8 @@ const char JSON_TOKEN_NAMES[] = {
 	'\\'
 };
 
+const char* const JSON_EMPTY_STRING = "";
+
 
 static size_t align_offset(size_t offset, size_t align) {
 	size_t rem = offset % align;
@@ -332,7 +334,19 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 
 //Convenience function to get a string representing the value
 const char* json_value_get_type(json_value* value) {
-	return (value) ? JSON_VALUE_NAMES[value->valueType] : NULL;
+	const char* str = JSON_EMPTY_STRING;
+	
+	if (!value) {
+		return str;
+	}
+	
+	JSON_VALUE valueType = value->valueType;
+	
+	if (valueType < unspecified_value || valueType >= JSON_VALUE_COUNT) {
+		return str;
+	}
+	
+	return JSON_VALUE_NAMES[valueType];
 }
 
 /*
