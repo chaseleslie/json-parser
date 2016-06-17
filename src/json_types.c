@@ -79,7 +79,7 @@ const char JSON_TOKEN_NAMES[] = {
 const char* const JSON_EMPTY_STRING = "";
 
 
-static size_t align_offset(size_t offset, size_t align) {
+size_t align_offset(size_t offset, size_t align) {
 	size_t rem = offset % align;
 	if (!rem) {
 		return offset;

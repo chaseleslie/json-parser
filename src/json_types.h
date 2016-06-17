@@ -114,6 +114,8 @@ typedef enum JSON_PARSER_OPT {
 
 extern const char* const JSON_EMPTY_STRING;
 
+extern size_t align_offset(size_t offset, size_t align);
+
 struct json_parser_state;
 typedef struct json_parser_state json_parser_state;
 
