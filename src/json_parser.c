@@ -508,7 +508,7 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 				foundEndQuote = true;
 				break;
 			}
-		} else if (parserState->jsonStr[parserState->jsonStrPos] <= 0x1F) {
+		} else if ((uint8_t) parserState->jsonStr[parserState->jsonStrPos] <= 0x1F) {
 			json_error_lineno("json_parser:%u:%u Invalid control character in string\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return NULL;
