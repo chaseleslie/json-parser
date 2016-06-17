@@ -25,8 +25,19 @@
 #include "json_introspect.h"
 #include "json_parser.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
 #include <limits.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif	//#ifdef __cplusplus
+
+
+const size_t JSON_STR_BUFF_INIT_SIZE = 32;
+const double JSON_STR_BUFF_INCR_SIZE = 1.5;
 
 
 //Loop through string:value pairs in the passed object, call iter callback passing object, string and value
@@ -349,6 +360,422 @@ json_value* json_value_query(
 	parserState->JSON_Allocator->free(tokens);
 	return val;
 }
+
+/* JSON stringify functions */
+
+typedef struct json_string_buffer {
+	char* string;
+	size_t size;
+	size_t capacity;
+	const char* indent;
+	size_t indentLen;
+	size_t indentLevel;
+	int flags;
+} json_string_buffer;
+
+int json_value_stringify_value(json_parser_state* parserState, json_string_buffer* strBuff, json_value* value);
+int json_value_stringify_object(json_parser_state* parserState, json_string_buffer* strBuff, json_object* obj);
+int json_value_stringify_array(json_parser_state* parserState, json_string_buffer* strBuff, json_array* arr);
+int json_value_stringify_string(json_parser_state* parserState, json_string_buffer* strBuff, json_string* str);
+int json_value_stringify_number(json_parser_state* parserState, json_string_buffer* strBuff, json_number* num);
+
+//Resize and copy contents over if necessary
+//addSize is the additional size needed for the string
+static int json_string_buffer_resize(json_parser_state* parserState, json_string_buffer* strBuff, const size_t addSize) {
+	int retVal = 1;
+	const size_t neededSize = strBuff->size + addSize;
+	
+	if (neededSize > strBuff->capacity) {
+		char* tmpStr = NULL;
+		size_t newCap = align_offset(strBuff->capacity * JSON_STR_BUFF_INCR_SIZE, 16);
+		
+		//Try to maintain constant growth of capacity
+		//If inadequate, grow from neededSize
+		if (newCap < neededSize) {
+			newCap = align_offset(neededSize * JSON_STR_BUFF_INCR_SIZE, 16);
+		}
+		
+		tmpStr = parserState->JSON_Allocator->malloc(sizeof(char) * newCap);
+		
+		if (!tmpStr) {
+			return retVal;
+		}
+		
+		char* ptr = strBuff->string;
+		for (size_t k = 0, n = strBuff->size; k < n; k += 1) {
+			tmpStr[k] = ptr[k];
+		}
+		
+		strBuff->capacity = newCap;
+		parserState->JSON_Allocator->free(ptr);
+		strBuff->string = tmpStr;
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+//Append to the buffer
+static int json_string_buffer_append(json_parser_state* parserState, json_string_buffer* strBuff, const char* str, const size_t strLen) {
+	int retVal = 1;
+	
+	retVal = json_string_buffer_resize(parserState, strBuff, strLen);
+	if (retVal) {
+		return retVal;
+	}
+	
+	char* ptr = strBuff->string;
+	for (size_t k = strBuff->size, n = k + strLen, m = 0; k < n; k += 1, m += 1) {
+		ptr[k] = str[m];
+	}
+	
+	strBuff->size += strLen;
+	
+	retVal = 0;
+	return retVal;
+}
+
+//Indent the buffer
+static int json_string_buffer_indent(json_parser_state* parserState, json_string_buffer* strBuff, const char* indent, const size_t indentLen, const size_t num) {
+	int retVal = 1;
+	
+	retVal = json_string_buffer_resize(parserState, strBuff, indentLen * num);
+	if (retVal) {
+		return retVal;
+	}
+	
+	for (size_t k = 0; k < num; k += 1) {
+		retVal = json_string_buffer_append(parserState, strBuff, indent, indentLen);
+		if (retVal) {
+			return retVal;
+		}
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+char* json_value_stringify(
+	json_parser_state* parserState,
+	json_value* value,
+	const char* indent,
+	int flags,
+	size_t* strLen
+) {
+	if (!parserState || !value || !strLen) {
+		return NULL;
+	}
+	
+	json_string_buffer strBuff = {NULL, 0, 0, indent ? indent : "\t", 0, 0, flags};
+	strBuff.string = parserState->JSON_Allocator->malloc(sizeof(char) * JSON_STR_BUFF_INIT_SIZE);
+	if (!strBuff.string) {
+		return NULL;
+	}
+	strBuff.capacity = JSON_STR_BUFF_INIT_SIZE;
+	const char* tmp = strBuff.indent;
+	while (*tmp) {
+		strBuff.indentLen += 1;
+		tmp += 1;
+	}
+	
+	int retVal = json_value_stringify_value(parserState, &strBuff, value);
+	if (retVal) {
+		parserState->JSON_Allocator->free(strBuff.string);
+		return NULL;
+	}
+	
+	retVal = json_string_buffer_append(parserState, &strBuff, "\0", 1);
+	if (retVal) {
+		parserState->JSON_Allocator->free(strBuff.string);
+		return NULL;
+	}
+	
+	*strLen = strBuff.size;
+	return strBuff.string;
+}
+
+int json_value_stringify_value(
+	json_parser_state* parserState,
+	json_string_buffer* strBuff,
+	json_value* value
+) {
+	int retVal = 1;
+	if (!parserState || !strBuff || !value) {
+		return retVal;
+	}
+	const int flags = strBuff->flags;
+	
+	switch (value->valueType) {
+		case object_value: {
+			retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_lbrace], 1);
+			if (retVal) {
+				return retVal;
+			}
+			
+			strBuff->indentLevel += 1;
+			retVal = json_value_stringify_object(parserState, strBuff, value->value);
+			if (retVal) {
+				return retVal;
+			}
+			strBuff->indentLevel -= 1;
+			
+			if (flags & json_stringify_indent) {
+				retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+				if (retVal) {
+					return retVal;
+				}
+			}
+			retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_rbrace], 1);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		case array_value: {
+			retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_lbrack], 1);
+			if (retVal) {
+				return retVal;
+			}
+			
+			strBuff->indentLevel += 1;
+			retVal = json_value_stringify_array(parserState, strBuff, value->value);
+			if (retVal) {
+				return retVal;
+			}
+			strBuff->indentLevel -= 1;
+			
+			if (flags & json_stringify_indent) {
+				retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+				if (retVal) {
+					return retVal;
+				}
+			}
+			retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_rbrack], 1);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		case string_value: {
+			retVal = json_value_stringify_string(parserState, strBuff, value->value);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		case number_value: {
+			retVal = json_value_stringify_number(parserState, strBuff, value->value);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		case true_value: {
+			retVal = json_string_buffer_append(parserState, strBuff, "true", 4);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		case false_value: {
+			retVal = json_string_buffer_append(parserState, strBuff, "false", 5);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		case null_value: {
+			retVal = json_string_buffer_append(parserState, strBuff, "null", 4);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		break;
+		default:
+			return retVal;
+		break;
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+int json_value_stringify_object(
+	json_parser_state* parserState,
+	json_string_buffer* strBuff,
+	json_object* obj
+) {
+	int retVal = 1;
+	const int flags = strBuff->flags;
+	
+	if (flags & json_stringify_indent) {
+		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
+		if (retVal) {
+			return retVal;
+		}
+	}
+	
+	for (size_t k = 0, n = obj->size; k < n; k += 1) {
+		if (flags & json_stringify_indent) {
+			retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		
+		retVal = json_value_stringify_string(parserState, strBuff, obj->names[k]);
+		
+		if (flags & json_stringify_spaces) {
+			retVal = json_string_buffer_append(parserState, strBuff, ": ", 2);
+			if (retVal) {
+				return retVal;
+			}
+		} else {
+			retVal = json_string_buffer_append(parserState, strBuff, ":", 1);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		
+		retVal = json_value_stringify_value(parserState, strBuff, obj->values[k]);
+		if (retVal) {
+			return retVal;
+		}
+		
+		if (k < n - 1) {
+			if (flags & json_stringify_spaces && !(flags & json_stringify_indent)) {
+				retVal = json_string_buffer_append(parserState, strBuff, ", ", 2);
+				if (retVal) {
+					return retVal;
+				}
+			} else if (flags & json_stringify_indent) {
+				retVal = json_string_buffer_append(parserState, strBuff, ",\n", 2);
+				if (retVal) {
+					return retVal;
+				}
+			}
+		}
+	}
+	
+	if (flags & json_stringify_indent) {
+		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
+		if (retVal) {
+			return retVal;
+		}
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+int json_value_stringify_array(
+	json_parser_state* parserState,
+	json_string_buffer* strBuff,
+	json_array* arr
+) {
+	int retVal = 1;
+	const int flags = strBuff->flags;
+	
+	if (flags & json_stringify_indent) {
+		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
+		if (retVal) {
+			return retVal;
+		}
+	}
+	
+	for (size_t k = 0, n = arr->size; k < n; k += 1) {
+		if (flags & json_stringify_indent) {
+			retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		retVal = json_value_stringify_value(parserState, strBuff, arr->values[k]);
+		if (retVal) {
+			return retVal;
+		}
+		
+		if (k < n - 1) {
+			if (flags & json_stringify_spaces && !(flags & json_stringify_indent)) {
+				retVal = json_string_buffer_append(parserState, strBuff, ", ", 2);
+				if (retVal) {
+					return retVal;
+				}
+			} else if (flags & json_stringify_indent) {
+				retVal = json_string_buffer_append(parserState, strBuff, ",\n", 2);
+				if (retVal) {
+					return retVal;
+				}
+			}
+		}
+	}
+	
+	if (flags & json_stringify_indent) {
+		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
+		if (retVal) {
+			return retVal;
+		}
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+//TODO: Handle flags regarding Unicode escapes in strings
+int json_value_stringify_string(
+	json_parser_state* parserState,
+	json_string_buffer* strBuff,
+	json_string* str
+) {
+	int retVal = 1;
+	const int flags = strBuff->flags;
+	
+	retVal = json_string_buffer_append(parserState, strBuff, "\"", 1);
+	if (retVal) {
+		return retVal;
+	}
+	
+	retVal = json_string_buffer_append(parserState, strBuff, str->value, str->valueLen);
+	if (retVal) {
+		return retVal;
+	}
+	
+	retVal = json_string_buffer_append(parserState, strBuff, "\"", 1);
+	if (retVal) {
+		return retVal;
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+int json_value_stringify_number(
+	json_parser_state* parserState,
+	json_string_buffer* strBuff,
+	json_number* num
+) {
+	int retVal = 1;
+	const size_t buffLen = 128;
+	char buff[128];
+	
+	int bytes = snprintf(buff, buffLen, "%g", num->value);
+	if (bytes < 1 || bytes >= buffLen) {
+		return retVal;
+	}
+	
+	retVal = json_string_buffer_append(parserState, strBuff, buff, bytes);
+	if (retVal) {
+		return retVal;
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+
+#ifdef __cplusplus
+}
+#endif	//#ifdef __cplusplus
 
 
 #endif	//#ifndef JSON_INTROSPECT_C
