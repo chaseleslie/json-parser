@@ -452,6 +452,9 @@ int main(int argc, char** argv) {
 		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): null parsed incorrectly\n");
 		exit_failure(retVal);
 	}
+	obj = NULL;
+	obj2 = NULL;
+	arr = NULL;
 	
 	/* Test json_visitor_free_all() with default alloc */
 	retVal = json_visitor_free_all(parserState, topVal);
@@ -488,8 +491,18 @@ int main(int argc, char** argv) {
 	}
 	topVal = NULL;
 	
-	/* Test handling escaped control chars in strings */
-	const char* jsonStr2 = "{\"bad\\u0000wolf\": 1}";
+	/* Test long arrays */
+	const char* jsonStr2 = (
+		"{"
+			"\"arr\": ["
+				"1,2,3,4,5,6,7,8,9,10,"
+				"11,12,13,14,15,16,17,18,19,20,"
+				"21,22,23,24,25,26,27,28,29,30,"
+				"31,32,33,34,35,36,37,38,39,40,"
+				"41,42,43,44,45,46,47,48"
+			"]"
+		"}"
+	);
 	const size_t jsonStr2Len = strlen(jsonStr2);
 	retVal = json_parser_reset(parserState);
 	if (retVal) {
@@ -498,6 +511,79 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	topVal = json_parser_parse(parserState, jsonStr2, jsonStr2Len);
+	if (!topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array\n");
+		exit_failure(retVal);
+	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array: parser state != complete\n");
+		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		exit_failure(retVal);
+	}
+	obj = topVal->value;
+	if (topVal->valueType != object_value || !obj) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): \n");
+		exit_failure(retVal);
+	} else if (obj->size != 1) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array: wrong object size\n");
+		fprintf(stdout, "\tobj size:\t%zu\tcapacity:\t%zu\n", obj->size, obj->capacity);
+		exit_failure(retVal);
+	}
+	arr = NULL;
+	for (size_t k = 0; k < obj->size; k += 1) {
+		json_string* name = obj->names[k];
+		if (!memcmp(name->value, "arr", 3)) {
+			arr = obj->values[k]->value;
+			break;
+		}
+	}
+	if (!arr) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array\n");
+		exit_failure(retVal);
+	} else if (arr->size != 48 || arr->capacity < 48) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array: wrong array size\n");
+		fprintf(stdout, "\tarr size:\t%zu\tcapacity:\t%zu\n", arr->size, arr->capacity);
+		exit_failure(retVal);
+	}
+	for (size_t k = 0; k < arr->size; k += 1) {
+		json_number* arrNum = arr->values[k]->value;
+		if (arr->values[k]->valueType != number_value) {
+			retVal = 1;
+			fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array: invalid value type\n");
+			fprintf(stdout, "\texpected: %s\tactual: %s", JSON_VALUE_NAMES[number_value], json_value_get_type(arr->values[k]));
+			exit_failure(retVal);
+		} else if ((double) (k + 1) != arrNum->value) {
+			retVal = 1;
+			fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() with long array: invalid value\n");
+			fprintf(stdout, "\texpected: %f\tactual: %f", (double) (k + 1), arrNum->value);
+			exit_failure(retVal);
+		}
+	}
+	retVal = json_visitor_free_all(parserState, topVal);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all() with long array\n");
+		exit_failure(retVal);
+	}
+	topVal = NULL;
+	obj = NULL;
+	arr = NULL;
+	
+	/* Test handling escaped control chars in strings */
+	const char* jsonStr3 = "{\"bad\\u0000wolf\": 1}";
+	const size_t jsonStr3Len = strlen(jsonStr2);
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	topVal = json_parser_parse(parserState, jsonStr3, jsonStr3Len);
 	if (!topVal) {
 		retVal = 1;
 		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse() after json_parser_reset()\n");
@@ -527,7 +613,7 @@ int main(int argc, char** argv) {
 		exit_failure(retVal);
 	}
 	topVal = NULL;
-	
+	obj3 = NULL;
 	
 	/* Test setting option json_max_nested_level */
 	retVal = json_parser_reset(parserState);
