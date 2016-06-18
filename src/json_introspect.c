@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <limits.h>
 
@@ -745,9 +747,32 @@ int json_value_stringify_string(
 		return retVal;
 	}
 	
-	retVal = json_string_buffer_append(parserState, strBuff, str->value, str->valueLen);
-	if (retVal) {
-		return retVal;
+	const size_t buffLen = 32;
+	char buff[32];
+	const char* ptr = str->value;
+	const size_t ptrLen = str->valueLen;
+	size_t pos = 0;
+	
+	while (pos < ptrLen) {
+		if ((uint8_t) ptr[pos] <= 0x1F) {
+			const int ret = snprintf(buff, buffLen, "\\u00%02" PRIx8, (uint8_t) ptr[pos]);
+			if (ret < 6 || ret >= buffLen) {
+				retVal = 1;
+				return retVal;
+			}
+			
+			retVal = json_string_buffer_append(parserState, strBuff, buff, 6);
+			if (retVal) {
+				return retVal;
+			}
+		} else {
+			retVal = json_string_buffer_append(parserState, strBuff, ptr + pos, 1);
+			if (retVal) {
+				return retVal;
+			}
+		}
+		
+		pos += 1;
 	}
 	
 	retVal = json_string_buffer_append(parserState, strBuff, "\"", 1);
