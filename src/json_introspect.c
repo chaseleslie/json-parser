@@ -653,6 +653,11 @@ int json_value_stringify_object(
 				if (retVal) {
 					return retVal;
 				}
+			} else {
+				retVal = json_string_buffer_append(parserState, strBuff, ",", 1);
+				if (retVal) {
+					return retVal;
+				}
 			}
 		}
 	}
@@ -703,6 +708,11 @@ int json_value_stringify_array(
 				}
 			} else if (flags & json_stringify_indent) {
 				retVal = json_string_buffer_append(parserState, strBuff, ",\n", 2);
+				if (retVal) {
+					return retVal;
+				}
+			} else {
+				retVal = json_string_buffer_append(parserState, strBuff, ",", 1);
 				if (retVal) {
 					return retVal;
 				}
