@@ -24,6 +24,131 @@ static void exit_failure(int ret) {
 	exit(ret);
 }
 
+static int test_json_stringify(json_parser_state* parserState) {
+	int retVal = 1;
+	
+	const char* jsonStr = (
+		"{\n"
+			"\t\"obj\": {\n"
+				"\t\t\"arr\": [\n"
+					"\t\t\t1,\n"
+					"\t\t\t2,\n"
+					"\t\t\t3\n"
+				"\t\t]\n"
+			"\t},\n"
+			"\t\"str\": \"Some string here.\",\n"
+			"\t\"num\": 314159,\n"
+			"\t\"tru\": true,\n"
+			"\t\"fals\": false,\n"
+			"\t\"nul\": null,\n"
+			"\t\"bad\\u0000wolf\": 1\n"
+		"}"
+	);
+	const size_t jsonStrLen = strlen(jsonStr);
+	
+	const char* jsonPretty = jsonStr;
+	const size_t jsonPrettyLen = jsonStrLen;
+	
+	const char* jsonSpaced = (
+		"{\"obj\": {\"arr\": [1, 2, 3]}, "
+		"\"str\": \"Some string here.\", "
+		"\"num\": 314159, "
+		"\"tru\": true, "
+		"\"fals\": false, "
+		"\"nul\": null, "
+		"\"bad\\u0000wolf\": 1}"
+	);
+	const size_t jsonSpacedLen = strlen(jsonSpaced);
+	
+	const char* jsonPlain = (
+		"{\"obj\":{\"arr\":[1,2,3]},"
+		"\"str\":\"Some string here.\","
+		"\"num\":314159,"
+		"\"tru\":true,"
+		"\"fals\":false,"
+		"\"nul\":null,"
+		"\"bad\\u0000wolf\":1}"
+	);
+	const size_t jsonPlainLen = strlen(jsonPlain);
+	
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	
+	json_value* topVal = json_parser_parse(parserState, jsonStr, jsonStrLen);
+	if (!topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse()\n");
+		exit_failure(retVal);
+	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): parser state != complete\n");
+		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		exit_failure(retVal);
+	}
+	
+	size_t stringifyLen = 0;
+	char* stringify = json_value_stringify(parserState, topVal, NULL, json_stringify_spaces | json_stringify_indent, &stringifyLen);
+	if (!stringify || !stringifyLen) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify()\n");
+		exit_failure(retVal);
+	} else if (strncmp(jsonPretty, stringify, stringifyLen)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify(): unexpected output\n");
+		fprintf(stdout, "expected:\n%s\n\nhave:\n%s", jsonPretty, stringify);
+		exit_failure(retVal);
+	}
+	free(stringify);
+	stringify = NULL;
+	stringifyLen = 0;
+	
+	stringifyLen = 0;
+	stringify = json_value_stringify(parserState, topVal, NULL, json_stringify_spaces, &stringifyLen);
+	if (!stringify || !stringifyLen) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify()\n");
+		exit_failure(retVal);
+	} else if (strncmp(jsonSpaced, stringify, stringifyLen)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify(): unexpected output\n");
+		fprintf(stdout, "expected:\n%s\n\nhave:\n%s", jsonSpaced, stringify);
+		exit_failure(retVal);
+	}
+	free(stringify);
+	stringify = NULL;
+	stringifyLen = 0;
+	
+	stringifyLen = 0;
+	stringify = json_value_stringify(parserState, topVal, NULL, 0, &stringifyLen);
+	if (!stringify || !stringifyLen) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify()\n");
+		exit_failure(retVal);
+	} else if (strncmp(jsonPlain, stringify, stringifyLen)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify(): unexpected output\n");
+		fprintf(stdout, "expected:\n%s\n\nhave:\n%s", jsonPlain, stringify);
+		exit_failure(retVal);
+	}
+	free(stringify);
+	stringify = NULL;
+	stringifyLen = 0;
+	
+	retVal = json_visitor_free_all(parserState, topVal);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all()\n");
+		exit_failure(retVal);
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
 static int test_json_pointer(json_parser_state* parserState) {
 	int retVal = 1;
 	
@@ -347,7 +472,7 @@ int main(int argc, char** argv) {
 	const char* jsonStr = (
 		"{"
 			"\"obj\": {\"arr\": [1,2,3]},"
-			"\"str\": \"Some string here.\","
+			"\"str\": \"Some ""\xE2\x80\x98""string""\xE2\x80\x99"" here.\","
 			"\"num\": 3.1415926535897932,"
 			"\"tru\": true,"
 			"\"fals\": false,"
@@ -661,19 +786,11 @@ int main(int argc, char** argv) {
 		return retVal;
 	}
 	
-	/* Test error reporting */
-	char buf[BUFSIZ];
-	setbuf(parserState->errorStream, buf);
-	parserState->jsonStrPos = 26u;
-	json_error_lineno("%zu:%zu", parserState);
-	if (strncmp("0:26", buf, 4)) {
-		retVal = 1;
-		fprintf(stdout, "%s", "FAIL:\tjson_error_lineno()\n");
-		fclose(stderr);
-		exit_failure(retVal);
+	/*  */
+	retVal = test_json_stringify(parserState);
+	if (retVal) {
+		return retVal;
 	}
-	//Buffer must be valid when stream closed (setbuf)
-	fclose(stderr);
 	
 	retVal = json_parser_clear(parserState);
 	if (retVal) {
