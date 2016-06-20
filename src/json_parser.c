@@ -387,6 +387,7 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 		json_value* value = json_parser_parse_value(parserState, obj, object_value);
 		if (!value) {
 			json_parser_add_state(parserState, error_state);
+			parserState->JSON_Allocator->free(str->value);
 			parserState->JSON_Allocator->free(str);
 			return obj;
 		}
