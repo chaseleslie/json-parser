@@ -145,6 +145,67 @@ static int test_json_stringify(json_parser_state* parserState) {
 		exit_failure(retVal);
 	}
 	
+	//Test round trip of Unicode escapes
+	const char* jsonStrStr = "\"Some String\\uD834\\uDD1EHere\"";
+	const size_t jsonStrStrLen = strlen(jsonStrStr);
+	
+	retVal = json_parser_reset(parserState);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_reset()\n");
+		exit_failure(retVal);
+	}
+	
+	topVal = json_parser_parse(parserState, jsonStrStr, jsonStrStrLen);
+	if (!topVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse()\n");
+		exit_failure(retVal);
+	} else if (strncmp("complete", json_parser_get_state_string(parserState), 8)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_parser_parse(): parser state != complete\n");
+		fprintf(stdout, "\tparserState->state:\t%s\n", json_parser_get_state_string(parserState));
+		exit_failure(retVal);
+	}
+	
+	stringifyLen = 0;
+	stringify = json_value_stringify(parserState, topVal, NULL, json_stringify_escape_non_bmp, &stringifyLen);
+	if (!stringify || !stringifyLen) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify()\n");
+		exit_failure(retVal);
+	} else if (strncmp(jsonStrStr, stringify, stringifyLen)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify(): unexpected output\n");
+		fprintf(stdout, "expected:\n%s\n\nhave:\n%s", jsonStrStr, stringify);
+		exit_failure(retVal);
+	}
+	free(stringify);
+	stringify = NULL;
+	stringifyLen = 0;
+	
+	stringify = json_value_stringify(parserState, topVal, NULL, json_stringify_escape_non_ascii, &stringifyLen);
+	if (!stringify || !stringifyLen) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify()\n");
+		exit_failure(retVal);
+	} else if (strncmp(jsonStrStr, stringify, stringifyLen)) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_value_stringify(): unexpected output\n");
+		fprintf(stdout, "expected:\n%s\n\nhave:\n%s", jsonStrStr, stringify);
+		exit_failure(retVal);
+	}
+	free(stringify);
+	stringify = NULL;
+	stringifyLen = 0;
+	
+	retVal = json_visitor_free_all(parserState, topVal);
+	if (retVal) {
+		retVal = 1;
+		fprintf(stdout, "%s", "FAIL:\tjson_visitor_free_all()\n");
+		exit_failure(retVal);
+	}
+	
 	retVal = 0;
 	return retVal;
 }
