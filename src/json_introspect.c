@@ -437,6 +437,49 @@ static int json_string_buffer_append(json_parser_state* parserState, json_string
 	return retVal;
 }
 
+//Append to the buffer escaped
+static int json_string_buffer_append_escaped(json_parser_state* parserState, json_string_buffer* strBuff, const char* str) {
+	int retVal = 1;
+	
+	const size_t buffLen = 32;
+	char buff[32];
+	const uint8_t* ptr = (uint8_t*) str;
+	uint8_t c1 = ptr[0];
+	bool withinBMP = true;
+	uint32_t codePoint = 0;
+	
+	if (c1 < 0x80) {
+		codePoint = c1;
+	} else if (c1 >= 0xC0 && c1 < 0xE0) {
+		codePoint = (c1 & 0x1F) + (ptr[1] & 0x3F);
+	} else if (c1 >= 0xE0 && c1 < 0xF0) {
+		codePoint = (c1 & 0x0F) + (ptr[1] & 0x3F) + (ptr[2] & 0x3F);
+	} else if (c1 >= 0xF0) {
+		withinBMP = false;
+		codePoint = (c1 & 0x07) + (ptr[1] & 0x3F) + (ptr[2] & 0x3F) + (ptr[3] & 0x3F);
+	} else {
+		return retVal;
+	}
+	
+	int ret = 0;
+	if (withinBMP) {
+		ret = snprintf(buff, buffLen, "\\u%04X", codePoint);
+		if (ret < 0 || ret >= buffLen) {
+			return retVal;
+		}
+	} else {
+		const uint32_t cp = codePoint - 0x10000;
+		const uint16_t high = 0xD800 + (cp >> 10);
+		const uint16_t low = 0xDC00 + (cp & 0x3FF);
+		ret = snprintf(buff, buffLen, "\\u%04" PRIX16 "\\u%04" PRIX16, high, low);
+		if (ret < 0 || ret >= buffLen) {
+			return retVal;
+		}
+	}
+	
+	return json_string_buffer_append(parserState, strBuff, buff, ret);
+}
+
 //Indent the buffer
 static int json_string_buffer_indent(json_parser_state* parserState, json_string_buffer* strBuff, const char* indent, const size_t indentLen, const size_t num) {
 	int retVal = 1;
@@ -747,32 +790,49 @@ int json_value_stringify_string(
 		return retVal;
 	}
 	
-	const size_t buffLen = 32;
-	char buff[32];
 	const char* ptr = str->value;
 	const size_t ptrLen = str->valueLen;
 	size_t pos = 0;
+	bool escapeNonAscii = flags & json_stringify_escape_non_ascii;
+	bool escapeNonBmp = flags & json_stringify_escape_non_bmp;
 	
 	while (pos < ptrLen) {
-		if ((uint8_t) ptr[pos] <= 0x1F) {
-			const int ret = snprintf(buff, buffLen, "\\u00%02" PRIx8, (uint8_t) ptr[pos]);
-			if (ret < 6 || ret >= buffLen) {
-				retVal = 1;
-				return retVal;
-			}
-			
-			retVal = json_string_buffer_append(parserState, strBuff, buff, 6);
+		uint8_t c1 = ptr[pos];
+		bool needEscape = false;
+		size_t incr = 1;
+		
+		if (c1 < 0x1F) {
+			needEscape = true;
+			incr = 1;
+		} else if (c1 < 0x80) {
+			needEscape = false;
+			incr = 1;
+		} else if (c1 >= 0xC0 && c1 < 0xE0) {
+			needEscape = escapeNonAscii;
+			incr = 2;
+		} else if (c1 >= 0xE0 && c1 < 0xF0) {
+			needEscape = escapeNonAscii;
+			incr = 3;
+		} else if (c1 >= 0xF0) {
+			needEscape = escapeNonBmp;
+			incr = 4;
+		} else {
+			return retVal;
+		}
+		
+		if (needEscape) {
+			retVal = json_string_buffer_append_escaped(parserState, strBuff, ptr + pos);
 			if (retVal) {
 				return retVal;
 			}
 		} else {
-			retVal = json_string_buffer_append(parserState, strBuff, ptr + pos, 1);
+			retVal = json_string_buffer_append(parserState, strBuff, ptr + pos, incr);
 			if (retVal) {
 				return retVal;
 			}
 		}
 		
-		pos += 1;
+		pos += incr;
 	}
 	
 	retVal = json_string_buffer_append(parserState, strBuff, "\"", 1);
