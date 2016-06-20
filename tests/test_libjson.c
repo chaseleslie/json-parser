@@ -840,6 +840,7 @@ int main(int argc, char** argv) {
 		fprintf(stdout, "%s", "FAIL:\tjson_utils_unescape_string(): invalid unescape of UTF-16 surrogate pair\n");
 		exit_failure(retVal);
 	}
+	free((void*) unescapedStr);
 	
 	/* Test JSON Pointer query */
 	retVal = test_json_pointer(parserState);
