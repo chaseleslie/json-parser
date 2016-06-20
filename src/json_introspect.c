@@ -444,19 +444,19 @@ static int json_string_buffer_append_escaped(json_parser_state* parserState, jso
 	const size_t buffLen = 32;
 	char buff[32];
 	const uint8_t* ptr = (uint8_t*) str;
-	uint8_t c1 = ptr[0];
+	uint32_t c1 = ptr[0];
 	bool withinBMP = true;
 	uint32_t codePoint = 0;
 	
 	if (c1 < 0x80) {
 		codePoint = c1;
 	} else if (c1 >= 0xC0 && c1 < 0xE0) {
-		codePoint = (c1 & 0x1F) + (ptr[1] & 0x3F);
+		codePoint = ((c1 & 0x1F) << 6) + (ptr[1] & 0x3F);
 	} else if (c1 >= 0xE0 && c1 < 0xF0) {
-		codePoint = (c1 & 0x0F) + (ptr[1] & 0x3F) + (ptr[2] & 0x3F);
+		codePoint = ((c1 & 0x0F) << 12) + ((ptr[1] & 0x3F) << 6) + (ptr[2] & 0x3F);
 	} else if (c1 >= 0xF0) {
 		withinBMP = false;
-		codePoint = (c1 & 0x07) + (ptr[1] & 0x3F) + (ptr[2] & 0x3F) + (ptr[3] & 0x3F);
+		codePoint = ((c1 & 0x07) << 18) + ((ptr[1] & 0x3F) << 12) + ((ptr[2] & 0x3F) << 6) + (ptr[3] & 0x3F);
 	} else {
 		return retVal;
 	}
@@ -807,14 +807,14 @@ int json_value_stringify_string(
 		} else if (c1 < 0x80) {
 			needEscape = false;
 			incr = 1;
-		} else if (c1 >= 0xC0 && c1 < 0xE0) {
+		} else if (c1 >= 0xC0 && c1 < 0xE0 && (pos + 1 < ptrLen)) {
 			needEscape = escapeNonAscii;
 			incr = 2;
-		} else if (c1 >= 0xE0 && c1 < 0xF0) {
+		} else if (c1 >= 0xE0 && c1 < 0xF0 && (pos + 2 < ptrLen)) {
 			needEscape = escapeNonAscii;
 			incr = 3;
-		} else if (c1 >= 0xF0) {
-			needEscape = escapeNonBmp;
+		} else if (c1 >= 0xF0 && (pos + 3 < ptrLen)) {
+			needEscape = escapeNonAscii || escapeNonBmp;
 			incr = 4;
 		} else {
 			return retVal;
