@@ -252,13 +252,16 @@ json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulPar
 
 /* JSON Value manipulation functions */
 
+//Increase size of object; realloc if necessary
 //Returns zero on success, nonzero on error
-int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value) {
+int json_object_resize(json_factory* jsonFact, json_object* obj, const size_t newSize) {
 	int retVal = 1;
 	
-	if (!obj || !name || !value) {//Invalid Args
+	if (!jsonFact || !obj || newSize < obj->size) {
 		return retVal;
-	} else if (!obj->capacity) {//Uninitialized
+	}
+	
+	if (!obj->capacity) {//Uninitialized
 		obj->names = (json_string**) jsonFact->allocator->malloc( sizeof(json_string*) * JSON_OBJ_INIT_SIZE );
 		if (!obj->names) {
 			return retVal;
@@ -268,15 +271,10 @@ int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* 
 			return retVal;
 		}
 		obj->capacity = JSON_OBJ_INIT_SIZE;
-		obj->names[0] = name;
-		obj->values[0] = value;
-		obj->size = 1;
-	} else if (obj->size < obj->capacity ) {//Size < Capacity
-		obj->names[obj->size] = name;
-		obj->values[obj->size] = value;
-		obj->size += 1;
+	} else if (obj->size < obj->capacity) {
+		//There is enough space
 	} else {//Realloc
-		size_t sizeIncr = align_offset(obj->capacity * JSON_OBJ_INCR_SIZE, JSON_ALIGN_SIZE);
+		const size_t sizeIncr = align_offset(obj->capacity * JSON_OBJ_INCR_SIZE, JSON_ALIGN_SIZE);
 		json_string** names = (json_string**) jsonFact->allocator->malloc( sizeof(json_string*) * sizeIncr );
 		if (!names) {
 			return retVal;
@@ -293,10 +291,56 @@ int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* 
 		obj->names = names;
 		obj->values = values;
 		obj->capacity = sizeIncr;
+	}
+	
+	retVal = 0;
+	return retVal;
+}
+
+//Returns zero on success, nonzero on error
+int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value) {
+	int retVal = 1;
+
+	retVal = json_object_resize(jsonFact, obj, obj->size + 1);
+	if (retVal) {
+		return retVal;
+	}
+	obj->names[obj->size] = name;
+	obj->values[obj->size] = value;
+	obj->size += 1;
+	
+	retVal = 0;
+	return retVal;
+}
+
+//Increase size of array; realloc if necessary
+//Returns zero on success, nonzero on error
+int json_array_resize(json_factory* jsonFact, json_array* arr, const size_t newSize) {
+	int retVal = 1;
+	
+	if (!jsonFact || !arr || newSize < arr->size) {
+		return retVal;
+	}
+	
+	if (!arr->capacity) {//Uninitialized
+		arr->values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * JSON_ARRAY_INIT_SIZE );
+		if (!arr->values) {
+			return retVal;
+		}
+		arr->capacity = JSON_ARRAY_INIT_SIZE;
+	} else if (arr->size < arr->capacity ) {//Size < Capacity
+		//
+	} else {//Realloc
+		const size_t sizeIncr = align_offset(arr->capacity * JSON_ARRAY_INCR_SIZE, JSON_ALIGN_SIZE);
+		json_value** values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * sizeIncr );
+		if (!values) {
+			return retVal;
+		}
 		
-		obj->names[obj->size] = name;
-		obj->values[obj->size] = value;
-		obj->size += 1;
+		memcpy(values, arr->values, sizeof(arr->values) * arr->capacity);
+		jsonFact->allocator->free(arr->values);
+		arr->values = values;
+		arr->capacity = sizeIncr;
 	}
 	
 	retVal = 0;
@@ -307,34 +351,12 @@ int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* 
 int json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value) {
 	int retVal = 1;
 	
-	if (!arr || !value) {//Invalid Args
+	retVal = json_array_resize(jsonFact, arr, arr->size + 1);
+	if (retVal) {
 		return retVal;
-	} else if (!arr->capacity) {//Uninitialized
-		arr->values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * JSON_ARRAY_INIT_SIZE );
-		if (!arr->values) {
-			return retVal;
-		}
-		arr->capacity = JSON_ARRAY_INIT_SIZE;
-		arr->values[0] = value;
-		arr->size = 1;
-	} else if (arr->size < arr->capacity ) {//Size < Capacity
-		arr->values[arr->size] = value;
-		arr->size += 1;
-	} else {//Realloc
-		size_t sizeIncr = align_offset(arr->capacity * JSON_ARRAY_INCR_SIZE, JSON_ALIGN_SIZE);
-		json_value** values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * sizeIncr );
-		if (!values) {
-			return retVal;
-		}
-		
-		memcpy(values, arr->values, sizeof(arr->values) * arr->capacity);
-		jsonFact->allocator->free(arr->values);
-		arr->values = values;
-		arr->capacity = sizeIncr;
-		
-		arr->values[arr->size] = value;
-		arr->size += 1;
 	}
+	arr->values[arr->size] = value;
+	arr->size += 1;
 	
 	retVal = 0;
 	return retVal;
