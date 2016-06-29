@@ -192,8 +192,8 @@ json_false* json_factory_new_json_false(json_factory* jsonFact, json_value* falP
 json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulParentValue);
 /*@} */
 
-size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value);
-size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value);
+int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value);
+int json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value);
 
 const char* json_value_get_type(json_value* value);
 

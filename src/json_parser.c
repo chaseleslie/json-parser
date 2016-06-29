@@ -392,8 +392,8 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 			return obj;
 		}
 		
-		size_t ret = json_object_add_pair(parserState->JSON_Factory, obj, str, value);
-		if (!ret) {
+		int ret = json_object_add_pair(parserState->JSON_Factory, obj, str, value);
+		if (ret) {
 			json_error_lineno("json_parser:%u:%u Error: json_object_add_pair()\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return obj;
@@ -450,8 +450,8 @@ json_array* json_parser_parse_array(json_parser_state* parserState, json_value* 
 			return arr;
 		}
 		
-		size_t ret = json_array_add_element(parserState->JSON_Factory, arr, val);
-		if (!ret) {
+		int ret = json_array_add_element(parserState->JSON_Factory, arr, val);
+		if (ret) {
 			json_error_lineno("json_parser:%u:%u Error: json_array_add_element()\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return arr;

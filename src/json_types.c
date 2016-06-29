@@ -252,18 +252,20 @@ json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulPar
 
 /* JSON Value manipulation functions */
 
-//Returns number of pairs added to passed obj, or zero on error
-size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value) {
+//Returns zero on success, nonzero on error
+int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value) {
+	int retVal = 1;
+	
 	if (!obj || !name || !value) {//Invalid Args
-		return 0;
+		return retVal;
 	} else if (!obj->capacity) {//Uninitialized
 		obj->names = (json_string**) jsonFact->allocator->malloc( sizeof(json_string*) * JSON_OBJ_INIT_SIZE );
 		if (!obj->names) {
-			return 0;
+			return retVal;
 		}
 		obj->values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * JSON_OBJ_INIT_SIZE );
 		if (!obj->values) {
-			return 0;
+			return retVal;
 		}
 		obj->capacity = JSON_OBJ_INIT_SIZE;
 		obj->names[0] = name;
@@ -277,12 +279,12 @@ size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_strin
 		size_t sizeIncr = align_offset(obj->capacity * JSON_OBJ_INCR_SIZE, JSON_ALIGN_SIZE);
 		json_string** names = (json_string**) jsonFact->allocator->malloc( sizeof(json_string*) * sizeIncr );
 		if (!names) {
-			return 0;
+			return retVal;
 		}
 		json_value** values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * sizeIncr );
 		if (!values) {
 			jsonFact->allocator->free(names);
-			return 0;
+			return retVal;
 		}
 		memcpy(names, obj->names, sizeof(obj->names) * obj->capacity);
 		memcpy(values, obj->values, sizeof(obj->values) * obj->capacity);
@@ -296,17 +298,21 @@ size_t json_object_add_pair(json_factory* jsonFact, json_object* obj, json_strin
 		obj->values[obj->size] = value;
 		obj->size += 1;
 	}
-	return 1;
+	
+	retVal = 0;
+	return retVal;
 }
 
-//Returns number of elements added to passed array, or zero on error
-size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value) {
+//Returns zero on success, nonzero on error
+int json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value) {
+	int retVal = 1;
+	
 	if (!arr || !value) {//Invalid Args
-		return 0;
+		return retVal;
 	} else if (!arr->capacity) {//Uninitialized
 		arr->values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * JSON_ARRAY_INIT_SIZE );
 		if (!arr->values) {
-			return 0;
+			return retVal;
 		}
 		arr->capacity = JSON_ARRAY_INIT_SIZE;
 		arr->values[0] = value;
@@ -318,7 +324,7 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 		size_t sizeIncr = align_offset(arr->capacity * JSON_ARRAY_INCR_SIZE, JSON_ALIGN_SIZE);
 		json_value** values = (json_value**) jsonFact->allocator->malloc( sizeof(json_value*) * sizeIncr );
 		if (!values) {
-			return 0;
+			return retVal;
 		}
 		
 		memcpy(values, arr->values, sizeof(arr->values) * arr->capacity);
@@ -329,7 +335,9 @@ size_t json_array_add_element(json_factory* jsonFact, json_array* arr, json_valu
 		arr->values[arr->size] = value;
 		arr->size += 1;
 	}
-	return 1;
+	
+	retVal = 0;
+	return retVal;
 }
 
 //Convenience function to get a string representing the value
