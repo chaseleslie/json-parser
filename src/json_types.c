@@ -303,12 +303,18 @@ int json_object_resize(json_factory* jsonFact, json_object* obj, const size_t ne
 int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value) {
 	int retVal = 1;
 
-	retVal = json_object_resize(jsonFact, obj, obj->size + 1);
+	if (!jsonFact || !obj || !name || !value) {
+		return retVal;
+	}
+	
+	const size_t size = obj->size;
+	retVal = json_object_resize(jsonFact, obj, size + 1);
 	if (retVal) {
 		return retVal;
 	}
-	obj->names[obj->size] = name;
-	obj->values[obj->size] = value;
+	
+	obj->names[size] = name;
+	obj->values[size] = value;
 	obj->size += 1;
 	
 	retVal = 0;
@@ -358,11 +364,17 @@ int json_array_resize(json_factory* jsonFact, json_array* arr, const size_t newS
 int json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value) {
 	int retVal = 1;
 	
-	retVal = json_array_resize(jsonFact, arr, arr->size + 1);
+	if (!jsonFact || !arr || !value) {
+		return retVal;
+	}
+	
+	const size_t size = arr->size;
+	retVal = json_array_resize(jsonFact, arr, size + 1);
 	if (retVal) {
 		return retVal;
 	}
-	arr->values[arr->size] = value;
+	
+	arr->values[size] = value;
 	arr->size += 1;
 	
 	retVal = 0;
