@@ -51,10 +51,10 @@ int json_parser_setopt(json_parser_state* parserState, JSON_PARSER_OPT opt, ...)
 	if (opt < 0 || opt >= JSON_PARSER_OPT_MAX || !parserState) {
 		return retVal;
 	}
-	
+
 	va_list args;
 	va_start(args, opt);
-	
+
 	switch (opt) {
 		case json_max_nested_level: {
 			int maxLvl = va_arg(args, int);
@@ -75,9 +75,9 @@ int json_parser_setopt(json_parser_state* parserState, JSON_PARSER_OPT opt, ...)
 			return retVal;
 		break;
 	}
-	
+
 	va_end(args);
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -86,12 +86,12 @@ json_parser_state* json_parser_init(alloc_function allocFunction, free_function 
 	json_allocator* JSON_Allocator;
 	json_factory* JSON_Factory;
 	json_types_init(allocFunction, freeFunction, &JSON_Allocator, &JSON_Factory);
-	
+
 	json_parser_state* parserState = (json_parser_state*) JSON_Allocator->malloc(sizeof(json_parser_state));
 	if (!parserState) {
 		return NULL;
 	}
-	
+
 	parserState->JSON_Allocator = JSON_Allocator;
 	parserState->JSON_Factory = JSON_Factory;
 	parserState->jsonStrPos = 0;
@@ -99,7 +99,7 @@ json_parser_state* json_parser_init(alloc_function allocFunction, free_function 
 	parserState->nestedLevel = 0;
 	parserState->maxNestedLevel = JSON_MAX_NESTED_DEFAULT;
 	parserState->errorStream = stderr;
-	
+
 	return parserState;
 }
 
@@ -107,12 +107,12 @@ int json_parser_clear(json_parser_state* parserState) {
 	if (!parserState) {
 		return 1;
 	}
-	
+
 	free_function freeFunction = parserState->JSON_Allocator->free;
 	freeFunction(parserState->JSON_Factory);
 	freeFunction(parserState->JSON_Allocator);
 	freeFunction(parserState);
-	
+
 	return 0;
 }
 
@@ -120,14 +120,14 @@ int json_parser_reset(json_parser_state* parserState) {
 	if (!parserState) {
 		return 1;
 	}
-	
+
 	parserState->jsonStr = NULL;
 	parserState->jsonStrLength = 0;
 	parserState->jsonStrPos = 0;
 	parserState->state = init_state;
 	parserState->nestedLevel = 0;
 	parserState->maxNestedLevel = JSON_MAX_NESTED_DEFAULT;
-	
+
 	return 0;
 }
 
@@ -135,31 +135,31 @@ json_value* json_parser_parse(json_parser_state* parserState, const char* jsonSt
 	if (!parserState || !jsonStr || !jsonStrLength) {
 		return NULL;
 	}
-	
+
 	parserState->jsonStr = jsonStr;
 	parserState->jsonStrLength = jsonStrLength;
-	
+
 	json_value* topVal = json_parser_parse_value(parserState, NULL, unspecified_value);
 	if (!topVal) {
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	json_parser_add_state(parserState, complete_state);
-	
+
 	return topVal;
 }
 
 //TODO: Check return values/edge cases/etc
 json_value* json_parser_parse_value(json_parser_state* parserState, void* parentValue, JSON_VALUE parentValueType) {
 	json_value* val = NULL;
-	
+
 	json_parser_skip_ws(parserState);
 	if (!json_parser_expect(parserState, 0, "json_parser:%u:%u Error: Expecting value\n")) {
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	switch (parserState->jsonStr[parserState->jsonStrPos]) {
 		case '{': {
 			parserState->jsonStrPos += 1;
@@ -326,7 +326,7 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		}
 		break;
 	}
-	
+
 	if (parentValue) {
 		val->parentValueType = parentValueType;
 		val->parentValue = parentValue;
@@ -334,14 +334,14 @@ json_value* json_parser_parse_value(json_parser_state* parserState, void* parent
 		val->parentValueType = unspecified_value;
 		val->parentValue = NULL;
 	}
-	
+
 	return val;
 }
 
 json_object* json_parser_parse_object(json_parser_state* parserState, json_value* parentValue) {
 	json_object* obj = NULL;
 	json_parser_skip_ws(parserState);
-	
+
 	//Empty object case "{}"
 	if (parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_rbrace]) {
 		obj = parserState->JSON_Factory->new_json_object(parserState->JSON_Factory, parentValue);
@@ -353,14 +353,14 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 		parserState->jsonStrPos += 1;
 		return obj;
 	}
-	
+
 	obj = parserState->JSON_Factory->new_json_object(parserState->JSON_Factory, parentValue);
 	if (!obj) {
 		json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_object\n", parserState);
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	do {
 		//Parse Pair: json_string ':' json_value
 		json_parser_skip_ws(parserState);
@@ -369,12 +369,12 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 			return obj;
 		}
 		parserState->jsonStrPos += 1;
-		
+
 		json_string* str = json_parser_parse_string(parserState, NULL);
 		if (!str) {
 			return obj;
 		}
-		
+
 		json_parser_skip_ws(parserState);
 		if (!json_parser_expect(parserState, ':', "json_parser:%u:%u Expecting ':'\n")) {
 			json_parser_add_state(parserState, error_state);
@@ -383,43 +383,43 @@ json_object* json_parser_parse_object(json_parser_state* parserState, json_value
 		}
 		parserState->jsonStrPos += 1;
 		json_parser_skip_ws(parserState);
-		
+
 		json_value* value = json_parser_parse_value(parserState, obj, object_value);
 		if (!value) {
 			json_parser_add_state(parserState, error_state);
-			parserState->JSON_Allocator->free(str->value);
+			parserState->JSON_Allocator->free((char*)str->value);
 			parserState->JSON_Allocator->free(str);
 			return obj;
 		}
-		
+
 		int ret = json_object_add_pair(parserState->JSON_Factory, obj, str, value);
 		if (ret) {
 			json_error_lineno("json_parser:%u:%u Error: json_object_add_pair()\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return obj;
 		}
-		
+
 		json_parser_skip_ws(parserState);
 	} while (
 		parserState->jsonStrPos < parserState->jsonStrLength
 		&& parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_comma]
 		&& parserState->jsonStrPos++
 	);
-	
+
 	json_parser_skip_ws(parserState);
 	if (!json_parser_expect(parserState, '}', "json_parser:%u:%u Expecting '}'\n")) {
 		json_parser_add_state(parserState, error_state);
 		return obj;
 	}
 	parserState->jsonStrPos += 1;
-	
+
 	return obj;
 }
 
 json_array* json_parser_parse_array(json_parser_state* parserState, json_value* parentValue) {
 	json_array* arr = NULL;
 	json_parser_skip_ws(parserState);
-	
+
 	//Empty array case "[]"
 	if (parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_rbrack]) {
 		arr = parserState->JSON_Factory->new_json_array(parserState->JSON_Factory, parentValue);
@@ -431,46 +431,46 @@ json_array* json_parser_parse_array(json_parser_state* parserState, json_value* 
 		parserState->jsonStrPos += 1;
 		return arr;
 	}
-	
+
 	arr = parserState->JSON_Factory->new_json_array(parserState->JSON_Factory, parentValue);
 	if (!arr) {
 		json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_array\n", parserState);
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	do {
 		//Parse List: json_value [',' json_value]
 		json_parser_skip_ws(parserState);
-		
+
 		json_value* val = json_parser_parse_value(parserState, arr, array_value);
 		if (!val) {
 			json_error_lineno("json_parser:%u:%u Expecting value\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return arr;
 		}
-		
+
 		int ret = json_array_add_element(parserState->JSON_Factory, arr, val);
 		if (ret) {
 			json_error_lineno("json_parser:%u:%u Error: json_array_add_element()\n", parserState);
 			json_parser_add_state(parserState, error_state);
 			return arr;
 		}
-		
+
 		json_parser_skip_ws(parserState);
 	} while (
 		parserState->jsonStrPos < parserState->jsonStrLength
 		&& parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_comma]
 		&& parserState->jsonStrPos++
 	);
-	
+
 	json_parser_skip_ws(parserState);
 	if (!json_parser_expect(parserState, ']', "json_parser:%u:%u Expecting ']'\n")) {
 		json_parser_add_state(parserState, error_state);
 		return arr;
 	}
 	parserState->jsonStrPos += 1;
-	
+
 	return arr;
 }
 
@@ -484,14 +484,14 @@ json_number* json_parser_parse_number(json_parser_state* parserState, json_value
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	num = parserState->JSON_Factory->new_json_number(parserState->JSON_Factory, d, parentValue);
 	if (!num) {
 		json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_number\n", parserState);
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	parserState->jsonStrPos += endNum - (parserState->jsonStr + parserState->jsonStrPos);
 	return num;
 }
@@ -500,7 +500,7 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 	json_string* str = NULL;
 	bool foundEndQuote = false;
 	size_t startPos = parserState->jsonStrPos;
-	
+
 	while (parserState->jsonStrPos < parserState->jsonStrLength) {
 		if (parserState->jsonStr[parserState->jsonStrPos] == JSON_TOKEN_NAMES[json_token_quote]) {
 			if (parserState->jsonStrPos > startPos && parserState->jsonStr[parserState->jsonStrPos - 1] == JSON_TOKEN_NAMES[json_token_backslash]) {
@@ -516,13 +516,13 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 		}
 		parserState->jsonStrPos += 1;
 	}
-	
+
 	if (!foundEndQuote) {
 		json_error_lineno("json_parser:%u:%u Expecting '\"', reached eos\n", parserState);
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	size_t dataLen = parserState->jsonStrPos - startPos;
 	int ret = 0;
 	size_t unescapedLen = 0;
@@ -532,7 +532,7 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 		json_parser_add_state(parserState, error_state);
 		return NULL;
 	}
-	
+
 	str = parserState->JSON_Factory->new_json_string(parserState->JSON_Factory, data, unescapedLen, parentValue);
 	if (!str) {
 		json_error_lineno("json_parser:%u:%u Error: JSON_Factory::new_json_string\n", parserState);
@@ -540,7 +540,7 @@ json_string* json_parser_parse_string(json_parser_state* parserState, json_value
 		parserState->JSON_Allocator->free(data);
 		return NULL;
 	}
-	
+
 	parserState->jsonStrPos += 1;
 	return str;
 }
