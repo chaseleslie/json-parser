@@ -50,23 +50,23 @@ int json_object_foreach(json_value* val, json_object_foreach_cb iter) {
 	if (!val || !iter) {
 		return retVal;
 	}
-	
+
 	if (val->valueType != object_value) {
 		return retVal;
 	}
-	
+
 	return json_object_foreach_obj(val->value, iter);
 }
 int json_object_foreach_obj(json_object* obj, json_object_foreach_cb iter) {
 	if (!obj || !iter) {
 		return 1;
 	}
-	
+
 	size_t k = 0, numElems = obj->size;
 	while (k < numElems && iter(obj, obj->names[k], obj->values[k])) {
 		k += 1;
 	}
-	
+
 	return 0;
 }
 
@@ -78,23 +78,23 @@ int json_array_foreach(json_value* val, json_array_foreach_cb iter) {
 	if (!val || !iter) {
 		return retVal;
 	}
-	
+
 	if (val->valueType != array_value) {
 		return retVal;
 	}
-	
+
 	return json_array_foreach_arr(val->value, iter);
 }
 int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter) {
 	if (!arr || !iter) {
 		return 1;
 	}
-	
+
 	size_t k = 0, numElems = arr->size;
 	while (k < numElems && iter(arr, arr->values[k])) {
 		k += 1;
 	}
-	
+
 	return 0;
 }
 
@@ -116,7 +116,7 @@ static reference_token* parse_json_pointer(
 	size_t* tokensLen
 ) {
 	reference_token* tokens = NULL;
-	
+
 	size_t numTokens = 0;
 	int haveSep = 0;
 	for (size_t k = 0; k < jsonPtrStrLen; k += 1) {
@@ -132,12 +132,12 @@ static reference_token* parse_json_pointer(
 			}
 		}
 	}
-	
+
 	tokens = jsAlloc->malloc(sizeof(reference_token) * numTokens);
 	if (!tokens) {
 		return tokens;
 	}
-	
+
 	size_t tokenIndex = 0;
 	const char* lastTokenStart = jsonPtrStr;
 	for (size_t k = 0; k < jsonPtrStrLen; k += 1) {
@@ -154,17 +154,17 @@ static reference_token* parse_json_pointer(
 				jsAlloc->free(tokens);
 				return NULL;
 			}
-			
+
 			const char* ptr = lastTokenStart + 1;
 			for (size_t iK = 0; iK < tokenLen; iK += 1) {
 				token->token[iK] = ptr[iK];
 			}
-			
+
 			lastTokenStart = jsonPtrStr + k;
 			tokenIndex += 1;
 		}
 	}
-	
+
 	//Replace all "~1" with '/'
 	for (size_t k = 0; k < numTokens; k += 1) {
 		const size_t tokenLen = tokens[k].tokenLen;
@@ -187,7 +187,7 @@ static reference_token* parse_json_pointer(
 						for (size_t n = iK + 2, m = iK + 1; n < tokenLenUnescaped; n += 1, m += 1) {
 							ptr[m] = ptr[n];
 						}
-						
+
 						tokenLenUnescaped -= 1;
 					}
 				}
@@ -195,7 +195,7 @@ static reference_token* parse_json_pointer(
 		}
 		tokens[k].tokenLen = tokenLenUnescaped;
 	}
-	
+
 	//Replace all "~0" with '~'
 	for (size_t k = 0; k < numTokens; k += 1) {
 		const size_t tokenLen = tokens[k].tokenLen;
@@ -218,7 +218,7 @@ static reference_token* parse_json_pointer(
 						for (size_t n = iK + 2, m = iK + 1; n < tokenLenUnescaped; n += 1, m += 1) {
 							ptr[m] = ptr[n];
 						}
-						
+
 						tokenLenUnescaped -= 1;
 					}
 				}
@@ -226,7 +226,7 @@ static reference_token* parse_json_pointer(
 		}
 		tokens[k].tokenLen = tokenLenUnescaped;
 	}
-	
+
 	*tokensLen = numTokens;
 	return tokens;
 }
@@ -250,7 +250,7 @@ json_value* json_value_query(
 	} else if (queryLen == 1 && *query == '/') {
 		return value;
 	}
-	
+
 	size_t numTokens = 0;
 	reference_token* tokens = parse_json_pointer(
 		parserState->JSON_Allocator,
@@ -261,7 +261,7 @@ json_value* json_value_query(
 	if (!tokens) {
 		return val;
 	}
-	
+
 	int err = 0;
 	val = value;
 	for (size_t k = 0; k < numTokens; k += 1) {
@@ -323,7 +323,7 @@ json_value* json_value_query(
 				const char* ptr = obj->names[iK]->value;
 				const size_t ptrLen = obj->names[iK]->valueLen;
 				bool noMatch = false;	//Did this obj name match
-				
+
 				if (token->tokenLen == ptrLen) {
 					for (size_t n = 0; n < token->tokenLen && n < ptrLen; n += 1) {
 						if (ptr[n] != token->token[n]) {
@@ -337,7 +337,7 @@ json_value* json_value_query(
 				} else {
 					continue;
 				}
-				
+
 				matched = true;
 				val = obj->values[iK];
 				break;
@@ -350,12 +350,12 @@ json_value* json_value_query(
 			err = 1;
 			val = NULL;
 		}
-		
+
 		if (err) {
 			break;
 		}
 	}
-	
+
 	for (size_t k = 0; k < numTokens; k += 1) {
 		parserState->JSON_Allocator->free(tokens[k].token);
 	}
@@ -386,33 +386,33 @@ int json_value_stringify_number(json_parser_state* parserState, json_string_buff
 static int json_string_buffer_resize(json_parser_state* parserState, json_string_buffer* strBuff, const size_t addSize) {
 	int retVal = 1;
 	const size_t neededSize = strBuff->size + addSize;
-	
+
 	if (neededSize > strBuff->capacity) {
 		char* tmpStr = NULL;
 		size_t newCap = align_offset(strBuff->capacity * JSON_STR_BUFF_INCR_SIZE, 16);
-		
+
 		//Try to maintain constant growth of capacity
 		//If inadequate, grow from neededSize
 		if (newCap < neededSize) {
 			newCap = align_offset(neededSize * JSON_STR_BUFF_INCR_SIZE, 16);
 		}
-		
+
 		tmpStr = parserState->JSON_Allocator->malloc(sizeof(char) * newCap);
-		
+
 		if (!tmpStr) {
 			return retVal;
 		}
-		
+
 		char* ptr = strBuff->string;
 		for (size_t k = 0, n = strBuff->size; k < n; k += 1) {
 			tmpStr[k] = ptr[k];
 		}
-		
+
 		strBuff->capacity = newCap;
 		parserState->JSON_Allocator->free(ptr);
 		strBuff->string = tmpStr;
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -420,19 +420,19 @@ static int json_string_buffer_resize(json_parser_state* parserState, json_string
 //Append to the buffer
 static int json_string_buffer_append(json_parser_state* parserState, json_string_buffer* strBuff, const char* str, const size_t strLen) {
 	int retVal = 1;
-	
+
 	retVal = json_string_buffer_resize(parserState, strBuff, strLen);
 	if (retVal) {
 		return retVal;
 	}
-	
+
 	char* ptr = strBuff->string;
 	for (size_t k = strBuff->size, n = k + strLen, m = 0; k < n; k += 1, m += 1) {
 		ptr[k] = str[m];
 	}
-	
+
 	strBuff->size += strLen;
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -440,14 +440,14 @@ static int json_string_buffer_append(json_parser_state* parserState, json_string
 //Append to the buffer escaped
 static int json_string_buffer_append_escaped(json_parser_state* parserState, json_string_buffer* strBuff, const char* str) {
 	int retVal = 1;
-	
+
 	const size_t buffLen = 32;
 	char buff[32];
 	const uint8_t* ptr = (uint8_t*) str;
 	uint32_t c1 = ptr[0];
 	bool withinBMP = true;
 	uint32_t codePoint = 0;
-	
+
 	if (c1 < 0x80) {
 		codePoint = c1;
 	} else if (c1 >= 0xC0 && c1 < 0xE0) {
@@ -460,7 +460,7 @@ static int json_string_buffer_append_escaped(json_parser_state* parserState, jso
 	} else {
 		return retVal;
 	}
-	
+
 	int ret = 0;
 	if (withinBMP) {
 		ret = snprintf(buff, buffLen, "\\u%04X", codePoint);
@@ -476,26 +476,26 @@ static int json_string_buffer_append_escaped(json_parser_state* parserState, jso
 			return retVal;
 		}
 	}
-	
+
 	return json_string_buffer_append(parserState, strBuff, buff, ret);
 }
 
 //Indent the buffer
 static int json_string_buffer_indent(json_parser_state* parserState, json_string_buffer* strBuff, const char* indent, const size_t indentLen, const size_t num) {
 	int retVal = 1;
-	
+
 	retVal = json_string_buffer_resize(parserState, strBuff, indentLen * num);
 	if (retVal) {
 		return retVal;
 	}
-	
+
 	for (size_t k = 0; k < num; k += 1) {
 		retVal = json_string_buffer_append(parserState, strBuff, indent, indentLen);
 		if (retVal) {
 			return retVal;
 		}
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -510,7 +510,7 @@ char* json_value_stringify(
 	if (!parserState || !value || !strLen) {
 		return NULL;
 	}
-	
+
 	json_string_buffer strBuff = {NULL, 0, 0, indent ? indent : "\t", 0, 0, flags};
 	strBuff.string = parserState->JSON_Allocator->malloc(sizeof(char) * JSON_STR_BUFF_INIT_SIZE);
 	if (!strBuff.string) {
@@ -522,19 +522,19 @@ char* json_value_stringify(
 		strBuff.indentLen += 1;
 		tmp += 1;
 	}
-	
+
 	int retVal = json_value_stringify_value(parserState, &strBuff, value);
 	if (retVal) {
 		parserState->JSON_Allocator->free(strBuff.string);
 		return NULL;
 	}
-	
+
 	retVal = json_string_buffer_append(parserState, &strBuff, "\0", 1);
 	if (retVal) {
 		parserState->JSON_Allocator->free(strBuff.string);
 		return NULL;
 	}
-	
+
 	*strLen = strBuff.size;
 	return strBuff.string;
 }
@@ -549,21 +549,21 @@ int json_value_stringify_value(
 		return retVal;
 	}
 	const int flags = strBuff->flags;
-	
+
 	switch (value->valueType) {
 		case object_value: {
 			retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_lbrace], 1);
 			if (retVal) {
 				return retVal;
 			}
-			
+
 			strBuff->indentLevel += 1;
 			retVal = json_value_stringify_object(parserState, strBuff, value->value);
 			if (retVal) {
 				return retVal;
 			}
 			strBuff->indentLevel -= 1;
-			
+
 			if (flags & json_stringify_indent) {
 				retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
 				if (retVal) {
@@ -581,14 +581,14 @@ int json_value_stringify_value(
 			if (retVal) {
 				return retVal;
 			}
-			
+
 			strBuff->indentLevel += 1;
 			retVal = json_value_stringify_array(parserState, strBuff, value->value);
 			if (retVal) {
 				return retVal;
 			}
 			strBuff->indentLevel -= 1;
-			
+
 			if (flags & json_stringify_indent) {
 				retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
 				if (retVal) {
@@ -640,7 +640,7 @@ int json_value_stringify_value(
 			return retVal;
 		break;
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -652,14 +652,14 @@ int json_value_stringify_object(
 ) {
 	int retVal = 1;
 	const int flags = strBuff->flags;
-	
+
 	if (flags & json_stringify_indent) {
 		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
 		if (retVal) {
 			return retVal;
 		}
 	}
-	
+
 	for (size_t k = 0, n = obj->size; k < n; k += 1) {
 		if (flags & json_stringify_indent) {
 			retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
@@ -667,9 +667,12 @@ int json_value_stringify_object(
 				return retVal;
 			}
 		}
-		
+
 		retVal = json_value_stringify_string(parserState, strBuff, obj->names[k]);
-		
+		if (retVal) {
+			return retVal;
+		}
+
 		if (flags & json_stringify_spaces) {
 			retVal = json_string_buffer_append(parserState, strBuff, ": ", 2);
 			if (retVal) {
@@ -681,12 +684,12 @@ int json_value_stringify_object(
 				return retVal;
 			}
 		}
-		
+
 		retVal = json_value_stringify_value(parserState, strBuff, obj->values[k]);
 		if (retVal) {
 			return retVal;
 		}
-		
+
 		if (k < n - 1) {
 			if (flags & json_stringify_spaces && !(flags & json_stringify_indent)) {
 				retVal = json_string_buffer_append(parserState, strBuff, ", ", 2);
@@ -706,14 +709,14 @@ int json_value_stringify_object(
 			}
 		}
 	}
-	
+
 	if (flags & json_stringify_indent) {
 		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
 		if (retVal) {
 			return retVal;
 		}
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -725,14 +728,14 @@ int json_value_stringify_array(
 ) {
 	int retVal = 1;
 	const int flags = strBuff->flags;
-	
+
 	if (flags & json_stringify_indent) {
 		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
 		if (retVal) {
 			return retVal;
 		}
 	}
-	
+
 	for (size_t k = 0, n = arr->size; k < n; k += 1) {
 		if (flags & json_stringify_indent) {
 			retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
@@ -744,7 +747,7 @@ int json_value_stringify_array(
 		if (retVal) {
 			return retVal;
 		}
-		
+
 		if (k < n - 1) {
 			if (flags & json_stringify_spaces && !(flags & json_stringify_indent)) {
 				retVal = json_string_buffer_append(parserState, strBuff, ", ", 2);
@@ -764,14 +767,14 @@ int json_value_stringify_array(
 			}
 		}
 	}
-	
+
 	if (flags & json_stringify_indent) {
 		retVal = json_string_buffer_append(parserState, strBuff, "\n", 1);
 		if (retVal) {
 			return retVal;
 		}
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -784,23 +787,23 @@ int json_value_stringify_string(
 ) {
 	int retVal = 1;
 	const int flags = strBuff->flags;
-	
+
 	retVal = json_string_buffer_append(parserState, strBuff, "\"", 1);
 	if (retVal) {
 		return retVal;
 	}
-	
+
 	const char* ptr = str->value;
 	const size_t ptrLen = str->valueLen;
 	size_t pos = 0;
 	bool escapeNonAscii = flags & json_stringify_escape_non_ascii;
 	bool escapeNonBmp = flags & json_stringify_escape_non_bmp;
-	
+
 	while (pos < ptrLen) {
 		uint8_t c1 = ptr[pos];
 		bool needEscape = false;
 		size_t incr = 1;
-		
+
 		if (c1 < 0x1F) {
 			needEscape = true;
 			incr = 1;
@@ -819,7 +822,7 @@ int json_value_stringify_string(
 		} else {
 			return retVal;
 		}
-		
+
 		if (needEscape) {
 			retVal = json_string_buffer_append_escaped(parserState, strBuff, ptr + pos);
 			if (retVal) {
@@ -831,15 +834,15 @@ int json_value_stringify_string(
 				return retVal;
 			}
 		}
-		
+
 		pos += incr;
 	}
-	
+
 	retVal = json_string_buffer_append(parserState, strBuff, "\"", 1);
 	if (retVal) {
 		return retVal;
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
@@ -852,17 +855,17 @@ int json_value_stringify_number(
 	int retVal = 1;
 	const size_t buffLen = 128;
 	char buff[128];
-	
+
 	int bytes = snprintf(buff, buffLen, "%g", num->value);
 	if (bytes < 1 || bytes >= buffLen) {
 		return retVal;
 	}
-	
+
 	retVal = json_string_buffer_append(parserState, strBuff, buff, bytes);
 	if (retVal) {
 		return retVal;
 	}
-	
+
 	retVal = 0;
 	return retVal;
 }
