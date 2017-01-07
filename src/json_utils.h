@@ -12,8 +12,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
- 
+
+
 /**
  *  @file json_utils.h
  *  @brief JSON parser library utility functions
@@ -88,7 +88,7 @@ void json_error_lineno(const char* err, json_parser_state* parserState);
  *  case, @p unescapedLen will be set to zero but an allocated empty string is returned.
  *
  *  Note that JSON strings can contain Unicode escape sequences for control characters, which
- *  means that @c '\u0000' in a string will be unescaped to Unicode @c null char in memory. It is
+ *  means that @c "'\u0000'" in a string will be unescaped to Unicode @c null char in memory. It is
  *  therefore safest to use the returned length of the string for processing and to not rely on
  *  it being a C string; though if no error occurs a string containing the Unicode @c null char will
  *  still be terminated with @c null char at the end.

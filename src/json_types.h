@@ -112,11 +112,16 @@ typedef enum JSON_PARSER_OPT {
 	JSON_PARSER_OPT_MAX
 } JSON_PARSER_OPT;
 
+/*! @cond */
 extern const char* const JSON_EMPTY_STRING;
+/*! @endcond */
 
+/*! @cond */
 extern size_t align_offset(size_t offset, size_t align);
+/*! @endcond */
 
 struct json_parser_state;
+/*! Typedef for json_parser_state */
 typedef struct json_parser_state json_parser_state;
 
 struct json_allocator;
@@ -192,12 +197,14 @@ json_false* json_factory_new_json_false(json_factory* jsonFact, json_value* falP
 json_null* json_factory_new_json_null(json_factory* jsonFact, json_value* nulParentValue);
 /*@} */
 
+/*! @cond */
 int json_object_resize(json_factory* jsonFact, json_object* obj, const size_t newSize);
 int json_object_add_pair(json_factory* jsonFact, json_object* obj, json_string* name, json_value* value);
 int json_array_resize(json_factory* jsonFact, json_array* arr, const size_t newSize);
 int json_array_add_element(json_factory* jsonFact, json_array* arr, json_value* value);
 
 const char* json_value_get_type(json_value* value);
+/*! @endcond */
 
 /*@{ */
 int json_visitor_free_all(json_parser_state* parserState, json_value* topVal);
@@ -230,7 +237,7 @@ typedef struct json_factory {
 	/*! A pointer to the json_allocator object */
 	json_allocator* allocator;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Returns a new json_object */
 	json_object* (*new_json_object)(json_factory* jsonFact, json_value* objParentValue);
@@ -271,7 +278,7 @@ typedef struct json_object {
 	/*! Capacity of names and values */
 	size_t capacity;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Pointer to the json_value object containing this object */
 	json_value* parentValue;
@@ -293,7 +300,7 @@ typedef struct json_value {
 	/*! Pointer to the value object */
 	void* value;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Type of object that contains this value (object_value, array_value or unspecified_value for toplevel) */
 	JSON_VALUE parentValueType;
@@ -317,7 +324,7 @@ typedef struct json_string {
 	/*! Length of @p value */
 	size_t valueLen;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Pointer to the json_value object containing this string */
 	json_value* parentValue;
@@ -337,7 +344,7 @@ typedef struct json_number {
 	/*! The value of the JSON number */
 	double value;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Pointer to the json_value object containing this number */
 	json_value* parentValue;
@@ -361,7 +368,7 @@ typedef struct json_array {
 	/*! Capacity of names and values */
 	size_t capacity;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Pointer to the json_value object containing this array */
 	json_value* parentValue;

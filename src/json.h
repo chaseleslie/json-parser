@@ -27,7 +27,9 @@
 #define JSON_H
 
 
+/*! @cond */
 #define JSON_TOP_LVL 1
+/*! @cond */
 
 
 #include "json_types.h"

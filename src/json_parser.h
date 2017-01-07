@@ -63,7 +63,7 @@ typedef struct json_parser_state {
 	/*! Error stream */
 	FILE* errorStream;
 	/*@} */
-	
+
 	/*@{ */
 	/*! Pointer to this parser's json_allocator */
 	json_allocator* JSON_Allocator;
@@ -81,6 +81,7 @@ typedef struct json_parser_state {
  *  the available options and what type of arguments they expect.
  *
  *  @param parserState Pointer to a previously initialized json_parser_state
+ *  @param opt Option to set
  *  @return Zero on success, or nonzero on failure
  *
  *  @see JSON_PARSER_OPT

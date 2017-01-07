@@ -100,10 +100,12 @@ int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter) {
 
 /* JSON Pointer functions */
 
+/*! @cond */
 typedef struct reference_token {
 	char* token;
 	size_t tokenLen;
 } reference_token;
+/*! @cond */
 
 //Assumptions:
 //jsonPtrStrLen > 1,
@@ -365,6 +367,7 @@ json_value* json_value_query(
 
 /* JSON stringify functions */
 
+/*! @cond */
 typedef struct json_string_buffer {
 	char* string;
 	size_t size;
@@ -374,6 +377,7 @@ typedef struct json_string_buffer {
 	size_t indentLevel;
 	int flags;
 } json_string_buffer;
+/*! @endcond */
 
 int json_value_stringify_value(json_parser_state* parserState, json_string_buffer* strBuff, json_value* value);
 int json_value_stringify_object(json_parser_state* parserState, json_string_buffer* strBuff, json_object* obj);
