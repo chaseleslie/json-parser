@@ -860,7 +860,7 @@ int json_value_stringify_number(
 	const size_t buffLen = 128;
 	char buff[128];
 
-	int bytes = snprintf(buff, buffLen, "%g", num->value);
+	int bytes = snprintf(buff, buffLen, "%.16g", num->value);
 	if (bytes < 1 || bytes >= buffLen) {
 		return retVal;
 	}
