@@ -405,6 +405,104 @@ int json_value_stringify_number(
   json_number* num
 );
 
+// Extracts code point from UTF8 string
+// Assumes str contains valid UTF8
+static uint32_t json_char_utf8_to_codepoint(const uint8_t* str) {
+  const uint32_t c = str[0];
+
+  if (c < 0x80) {
+    return c;
+  } else if (0xC0 <= c && c < 0xE0) {
+    return ((c & 0x1F) << 6) + (str[1] & 0x3F);
+  } else if (0xE0 <= c && c < 0xF0) {
+    return ((c & 0x0F) << 12) + ((str[1] & 0x3F) << 6) + (str[2] & 0x3F);
+  } else if (c >= 0xF0) {
+    return (
+      ((c & 0x07) << 18) +
+      ((str[1] & 0x3F) << 12) +
+      ((str[2] & 0x3F) << 6) +
+      (str[3] & 0x3F)
+    );
+  }
+
+  return 0;
+}
+
+// Return short escape char of given ASCII code point
+static uint8_t json_char_short_escape(const uint8_t c) {
+  switch (c) {
+    case 0x08:
+      return 'b';
+    case 0x09:
+      return 't';
+    case 0x0A:
+      return 'n';
+    case 0x0C:
+      return 'f';
+    case 0x0D:
+      return 'r';
+    case 0x22:
+      return '"';
+    case 0x2F:
+      return '/';
+    case 0x5C:
+      return '\\';
+    default:
+      return 0;
+  }
+}
+
+// Assumes short escapes have already been ruled out
+static bool json_char_needs_escape(const uint8_t c, size_t* incr, const int flags) {
+  bool ret = false;
+  const bool escapeNonAscii = flags & json_stringify_escape_non_ascii;
+  const bool escapeNonBmp = flags & json_stringify_escape_non_bmp;
+
+  if (c < 0x1F) {
+    ret = true;
+    *incr = 1;
+  } else if (c < 0x80) {
+    ret = false;
+    *incr = 1;
+  } else if (0xC0 <= c && c < 0xE0) {
+    ret = escapeNonAscii;
+    *incr = 2;
+  } else if (0xE0 <= c && c < 0xF0) {
+    ret = escapeNonAscii;
+    *incr = 3;
+  } else if (c >= 0xF0) {
+    ret = escapeNonAscii || escapeNonBmp;
+    *incr = 4;
+  }
+
+  return ret;
+}
+
+// Several code points get short escapes (\t, \n, etc)
+static bool json_char_needs_short_escape(const uint8_t c, const int flags) {
+  const bool escapeSlash = flags & json_stringify_escape_slash;
+
+  switch (c) {
+    case 0x08:
+    case 0x09:
+    case 0x0A:
+    case 0x0C:
+    case 0x0D:
+    case 0x22:
+    case 0x2F:
+    case 0x5C:
+      if (c != 0x2F) {
+        return true;
+      } else if (escapeSlash) {
+        return true;
+      } else {
+        return false;
+      }
+    default:
+      return false;
+  }
+}
+
 //Resize and copy contents over if necessary
 //addSize is the additional size needed for the string
 static int json_string_buffer_resize(
@@ -470,7 +568,8 @@ static int json_string_buffer_append(
   return retVal;
 }
 
-//Append to the buffer escaped
+// Append to the buffer escaped
+// Assumes str contains valid UTF8
 static int json_string_buffer_append_escaped(
   json_parser_state* parserState,
   json_string_buffer* strBuff,
@@ -481,27 +580,8 @@ static int json_string_buffer_append_escaped(
   const size_t buffLen = 32;
   char buff[32];
   const uint8_t* ptr = (uint8_t*) str;
-  uint32_t c1 = ptr[0];
-  bool withinBMP = true;
-  uint32_t codePoint = 0;
-
-  if (c1 < 0x80) {
-    codePoint = c1;
-  } else if (c1 >= 0xC0 && c1 < 0xE0) {
-    codePoint = ((c1 & 0x1F) << 6) + (ptr[1] & 0x3F);
-  } else if (c1 >= 0xE0 && c1 < 0xF0) {
-    codePoint = ((c1 & 0x0F) << 12) + ((ptr[1] & 0x3F) << 6) + (ptr[2] & 0x3F);
-  } else if (c1 >= 0xF0) {
-    withinBMP = false;
-    codePoint = (
-      ((c1 & 0x07) << 18) +
-      ((ptr[1] & 0x3F) << 12) +
-      ((ptr[2] & 0x3F) << 6) +
-      (ptr[3] & 0x3F)
-    );
-  } else {
-    return retVal;
-  }
+  const uint32_t codePoint = json_char_utf8_to_codepoint(ptr);
+  const bool withinBMP = codePoint < 0xFFFF;
 
   int ret = 0;
   if (withinBMP) {
@@ -520,6 +600,20 @@ static int json_string_buffer_append_escaped(
   }
 
   return json_string_buffer_append(parserState, strBuff, buff, ret);
+}
+
+// Append to buffer with short escape
+// Assumes c is ASCII code point with valid short escape
+static int json_string_buffer_append_short_escaped(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  const uint8_t c
+) {
+  char buff[32] = {'\\'};
+
+  buff[1] = json_char_short_escape(c);
+
+  return json_string_buffer_append(parserState, strBuff, buff, 2);
 }
 
 //Indent the buffer
@@ -890,43 +984,25 @@ int json_value_stringify_string(
   const char* ptr = str->value;
   const size_t ptrLen = str->valueLen;
   size_t pos = 0;
-  bool escapeNonAscii = flags & json_stringify_escape_non_ascii;
-  bool escapeNonBmp = flags & json_stringify_escape_non_bmp;
 
   while (pos < ptrLen) {
-    uint8_t c1 = ptr[pos];
-    bool needEscape = false;
     size_t incr = 1;
 
-    if (c1 < 0x1F) {
-      needEscape = true;
-      incr = 1;
-    } else if (c1 < 0x80) {
-      needEscape = false;
-      incr = 1;
-    } else if (c1 >= 0xC0 && c1 < 0xE0 && (pos + 1 < ptrLen)) {
-      needEscape = escapeNonAscii;
-      incr = 2;
-    } else if (c1 >= 0xE0 && c1 < 0xF0 && (pos + 2 < ptrLen)) {
-      needEscape = escapeNonAscii;
-      incr = 3;
-    } else if (c1 >= 0xF0 && (pos + 3 < ptrLen)) {
-      needEscape = escapeNonAscii || escapeNonBmp;
-      incr = 4;
+    if (json_char_needs_short_escape(ptr[pos], flags)) {
+      retVal = json_string_buffer_append_short_escaped(parserState, strBuff, ptr[pos]);
+    } else if (json_char_needs_escape(ptr[pos], &incr, flags)) {
+      if (pos + incr < ptrLen) {
+        retVal = json_string_buffer_append_escaped(parserState, strBuff, ptr + pos);
+      } else {
+        retVal = 1;
+      }
     } else {
-      return retVal;
+      incr = 1;
+      retVal = json_string_buffer_append(parserState, strBuff, ptr + pos, incr);
     }
 
-    if (needEscape) {
-      retVal = json_string_buffer_append_escaped(parserState, strBuff, ptr + pos);
-      if (retVal) {
-        return retVal;
-      }
-    } else {
-      retVal = json_string_buffer_append(parserState, strBuff, ptr + pos, incr);
-      if (retVal) {
-        return retVal;
-      }
+    if (retVal) {
+      return retVal;
     }
 
     pos += incr;

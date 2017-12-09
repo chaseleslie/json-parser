@@ -145,7 +145,9 @@ enum JSON_STRINGIFY_FLAGS {
   /*! Escape chars outside of Unicode BMP to \\uXXXX\\uXXXX UTF-16 surrogate pairs */
   json_stringify_escape_non_bmp = 4,
   /*! Escape all chars outside ASCII to \\uXXXX, implies json_stringify_escape_non_bmp  */
-  json_stringify_escape_non_ascii = 8
+  json_stringify_escape_non_ascii = 8,
+  /*! Escape forward slashes */
+  json_stringify_escape_slash = 16
 };
 
 /**
