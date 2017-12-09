@@ -379,15 +379,39 @@ typedef struct json_string_buffer {
 } json_string_buffer;
 /*! @endcond */
 
-int json_value_stringify_value(json_parser_state* parserState, json_string_buffer* strBuff, json_value* value);
-int json_value_stringify_object(json_parser_state* parserState, json_string_buffer* strBuff, json_object* obj);
-int json_value_stringify_array(json_parser_state* parserState, json_string_buffer* strBuff, json_array* arr);
-int json_value_stringify_string(json_parser_state* parserState, json_string_buffer* strBuff, json_string* str);
-int json_value_stringify_number(json_parser_state* parserState, json_string_buffer* strBuff, json_number* num);
+int json_value_stringify_value(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  json_value* value
+);
+int json_value_stringify_object(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  json_object* obj
+);
+int json_value_stringify_array(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  json_array* arr
+);
+int json_value_stringify_string(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  json_string* str
+);
+int json_value_stringify_number(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  json_number* num
+);
 
 //Resize and copy contents over if necessary
 //addSize is the additional size needed for the string
-static int json_string_buffer_resize(json_parser_state* parserState, json_string_buffer* strBuff, const size_t addSize) {
+static int json_string_buffer_resize(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  const size_t addSize
+) {
   int retVal = 1;
   const size_t neededSize = strBuff->size + addSize;
 
@@ -422,7 +446,12 @@ static int json_string_buffer_resize(json_parser_state* parserState, json_string
 }
 
 //Append to the buffer
-static int json_string_buffer_append(json_parser_state* parserState, json_string_buffer* strBuff, const char* str, const size_t strLen) {
+static int json_string_buffer_append(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  const char* str,
+  const size_t strLen
+) {
   int retVal = 1;
 
   retVal = json_string_buffer_resize(parserState, strBuff, strLen);
@@ -442,7 +471,11 @@ static int json_string_buffer_append(json_parser_state* parserState, json_string
 }
 
 //Append to the buffer escaped
-static int json_string_buffer_append_escaped(json_parser_state* parserState, json_string_buffer* strBuff, const char* str) {
+static int json_string_buffer_append_escaped(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  const char* str
+) {
   int retVal = 1;
 
   const size_t buffLen = 32;
@@ -460,7 +493,12 @@ static int json_string_buffer_append_escaped(json_parser_state* parserState, jso
     codePoint = ((c1 & 0x0F) << 12) + ((ptr[1] & 0x3F) << 6) + (ptr[2] & 0x3F);
   } else if (c1 >= 0xF0) {
     withinBMP = false;
-    codePoint = ((c1 & 0x07) << 18) + ((ptr[1] & 0x3F) << 12) + ((ptr[2] & 0x3F) << 6) + (ptr[3] & 0x3F);
+    codePoint = (
+      ((c1 & 0x07) << 18) +
+      ((ptr[1] & 0x3F) << 12) +
+      ((ptr[2] & 0x3F) << 6) +
+      (ptr[3] & 0x3F)
+    );
   } else {
     return retVal;
   }
@@ -485,7 +523,13 @@ static int json_string_buffer_append_escaped(json_parser_state* parserState, jso
 }
 
 //Indent the buffer
-static int json_string_buffer_indent(json_parser_state* parserState, json_string_buffer* strBuff, const char* indent, const size_t indentLen, const size_t num) {
+static int json_string_buffer_indent(
+  json_parser_state* parserState,
+  json_string_buffer* strBuff,
+  const char* indent,
+  const size_t indentLen,
+  const size_t num
+) {
   int retVal = 1;
 
   retVal = json_string_buffer_resize(parserState, strBuff, indentLen * num);
@@ -516,7 +560,9 @@ char* json_value_stringify(
   }
 
   json_string_buffer strBuff = {NULL, 0, 0, indent ? indent : "\t", 0, 0, flags};
-  strBuff.string = parserState->JSON_Allocator->malloc(sizeof(char) * JSON_STR_BUFF_INIT_SIZE);
+  strBuff.string = parserState->JSON_Allocator->malloc(
+    sizeof(char) * JSON_STR_BUFF_INIT_SIZE
+  );
   if (!strBuff.string) {
     return NULL;
   }
@@ -556,7 +602,12 @@ int json_value_stringify_value(
 
   switch (value->valueType) {
     case object_value: {
-      retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_lbrace], 1);
+      retVal = json_string_buffer_append(
+        parserState,
+        strBuff,
+        &JSON_TOKEN_NAMES[json_token_lbrace],
+        1
+      );
       if (retVal) {
         return retVal;
       }
@@ -569,19 +620,35 @@ int json_value_stringify_value(
       strBuff->indentLevel -= 1;
 
       if (flags & json_stringify_indent) {
-        retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+        retVal = json_string_buffer_indent(
+          parserState,
+          strBuff,
+          strBuff->indent,
+          strBuff->indentLen,
+          strBuff->indentLevel
+        );
         if (retVal) {
           return retVal;
         }
       }
-      retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_rbrace], 1);
+      retVal = json_string_buffer_append(
+        parserState,
+        strBuff,
+        &JSON_TOKEN_NAMES[json_token_rbrace],
+        1
+      );
       if (retVal) {
         return retVal;
       }
     }
     break;
     case array_value: {
-      retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_lbrack], 1);
+      retVal = json_string_buffer_append(
+        parserState,
+        strBuff,
+        &JSON_TOKEN_NAMES[json_token_lbrack],
+        1
+      );
       if (retVal) {
         return retVal;
       }
@@ -594,12 +661,23 @@ int json_value_stringify_value(
       strBuff->indentLevel -= 1;
 
       if (flags & json_stringify_indent) {
-        retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+        retVal = json_string_buffer_indent(
+          parserState,
+          strBuff,
+          strBuff->indent,
+          strBuff->indentLen,
+          strBuff->indentLevel
+        );
         if (retVal) {
           return retVal;
         }
       }
-      retVal = json_string_buffer_append(parserState, strBuff, &JSON_TOKEN_NAMES[json_token_rbrack], 1);
+      retVal = json_string_buffer_append(
+        parserState,
+        strBuff,
+        &JSON_TOKEN_NAMES[json_token_rbrack],
+        1
+      );
       if (retVal) {
         return retVal;
       }
@@ -666,7 +744,13 @@ int json_value_stringify_object(
 
   for (size_t k = 0, n = obj->size; k < n; k += 1) {
     if (flags & json_stringify_indent) {
-      retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+      retVal = json_string_buffer_indent(
+        parserState,
+        strBuff,
+        strBuff->indent,
+        strBuff->indentLen,
+        strBuff->indentLevel
+      );
       if (retVal) {
         return retVal;
       }
@@ -742,7 +826,13 @@ int json_value_stringify_array(
 
   for (size_t k = 0, n = arr->size; k < n; k += 1) {
     if (flags & json_stringify_indent) {
-      retVal = json_string_buffer_indent(parserState, strBuff, strBuff->indent, strBuff->indentLen, strBuff->indentLevel);
+      retVal = json_string_buffer_indent(
+        parserState,
+        strBuff,
+        strBuff->indent,
+        strBuff->indentLen,
+        strBuff->indentLevel
+      );
       if (retVal) {
         return retVal;
       }
