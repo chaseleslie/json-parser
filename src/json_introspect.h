@@ -29,7 +29,7 @@
 
 #ifndef JSON_TOP_LVL
 #error "The file json_types.h must not be included directly. Include 'json.h' instead."
-#endif	//#ifndef JSON_TOP_LVL
+#endif  //#ifndef JSON_TOP_LVL
 
 
 #include "json_types.h"
@@ -37,7 +37,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
 /*! Prototype for a callback function used with json_object_foreach() */
@@ -126,26 +126,26 @@ int json_array_foreach_arr(json_array* arr, json_array_foreach_cb iter);
  *  @see https://tools.ietf.org/html/rfc6901
  */
  json_value* json_value_query(
-	json_parser_state* parserState,
-	json_value* value,
-	const char* query,
-	const size_t queryLen
+  json_parser_state* parserState,
+  json_value* value,
+  const char* query,
+  const size_t queryLen
 );
 
 /**
  *  @brief Enum of flags to control JSON serialization
  */
 enum JSON_STRINGIFY_FLAGS {
-	/*! Default flags */
-	json_stringify_default = 0,
-	/*! Add a space after ':' and ',' tokens */
-	json_stringify_spaces = 1,
-	/*! Use newlines and indentation */
-	json_stringify_indent = 2,
-	/*! Escape chars outside of Unicode BMP to \\uXXXX\\uXXXX UTF-16 surrogate pairs */
-	json_stringify_escape_non_bmp = 4,
-	/*! Escape all chars outside ASCII to \\uXXXX, implies json_stringify_escape_non_bmp  */
-	json_stringify_escape_non_ascii = 8
+  /*! Default flags */
+  json_stringify_default = 0,
+  /*! Add a space after ':' and ',' tokens */
+  json_stringify_spaces = 1,
+  /*! Use newlines and indentation */
+  json_stringify_indent = 2,
+  /*! Escape chars outside of Unicode BMP to \\uXXXX\\uXXXX UTF-16 surrogate pairs */
+  json_stringify_escape_non_bmp = 4,
+  /*! Escape all chars outside ASCII to \\uXXXX, implies json_stringify_escape_non_bmp  */
+  json_stringify_escape_non_ascii = 8
 };
 
 /**
@@ -163,22 +163,22 @@ enum JSON_STRINGIFY_FLAGS {
  *  @param parserState A pointer to the parser instance
  *  @param value A pointer to the json_value to stringify
  *  @param indent A C string with the chars to use for indentation, or @c NULL for default
- *  @param flags A bitmask of 
+ *  @param flags A bitmask of
  *  @param[out] strLen A pointer to a @c size_t to receive the length of the returned string
  *  @return A UTF-8 encoded string containing the stringified JSON value
  */
  char* json_value_stringify(
-	json_parser_state* parserState,
-	json_value* value,
-	const char* indent,
-	int flags,
-	size_t* strLen
+  json_parser_state* parserState,
+  json_value* value,
+  const char* indent,
+  int flags,
+  size_t* strLen
 );
 
 
 #ifdef __cplusplus
 }
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_INTROSPECT_H
+#endif  //#ifndef JSON_INTROSPECT_H

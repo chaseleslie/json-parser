@@ -29,7 +29,7 @@
 
 #ifndef JSON_TOP_LVL
 #error "The file json_types.h must not be included directly. Include 'json.h' instead."
-#endif	//#ifndef JSON_TOP_LVL
+#endif  //#ifndef JSON_TOP_LVL
 
 
 #include <stddef.h>
@@ -37,22 +37,22 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
 /**
  *  @brief Enum representing the type of JSON value
  */
 typedef enum JSON_VALUE {
-	unspecified_value = 0,
-	string_value,
-	number_value,
-	object_value,
-	array_value,
-	true_value,
-	false_value,
-	null_value,
-	JSON_VALUE_COUNT
+  unspecified_value = 0,
+  string_value,
+  number_value,
+  object_value,
+  array_value,
+  true_value,
+  false_value,
+  null_value,
+  JSON_VALUE_COUNT
 } JSON_VALUE;
 
 /**
@@ -64,10 +64,10 @@ extern const char* const JSON_VALUE_NAMES[];
  *  @brief Enum representing state of parsing
  */
 typedef enum JSON_PARSER_STATE {
-	init_state = 0,
-	complete_state,
-	error_state,
-	JSON_PARSER_STATE_MAX
+  init_state = 0,
+  complete_state,
+  error_state,
+  JSON_PARSER_STATE_MAX
 } JSON_PARSER_STATE;
 
 /**
@@ -79,17 +79,17 @@ extern const char* const JSON_PARSER_STATE_NAMES[];
  *  @brief Enum representing tokens in JSON text
  */
 typedef enum JSON_TOKEN {
-	json_token_quote = 0,
-	json_token_plus,
-	json_token_minus,
-	json_token_lbrace,
-	json_token_rbrace,
-	json_token_lbrack,
-	json_token_rbrack,
-	json_token_colon,
-	json_token_comma,
-	json_token_backslash,
-	JSON_TOKEN_COUNT
+  json_token_quote = 0,
+  json_token_plus,
+  json_token_minus,
+  json_token_lbrace,
+  json_token_rbrace,
+  json_token_lbrack,
+  json_token_rbrack,
+  json_token_colon,
+  json_token_comma,
+  json_token_backslash,
+  JSON_TOKEN_COUNT
 } JSON_TOKEN;
 
 /**
@@ -105,11 +105,11 @@ extern const char JSON_TOKEN_NAMES[];
  *  in parenthesis.
  */
 typedef enum JSON_PARSER_OPT {
-	/*! The max nested depth allowed in JSON text source; int (128) */
-	json_max_nested_level = 0,
-	/*! The stream to write error messages to or NULL; FILE* (stderr) */
-	json_error_stream,
-	JSON_PARSER_OPT_MAX
+  /*! The max nested depth allowed in JSON text source; int (128) */
+  json_max_nested_level = 0,
+  /*! The stream to write error messages to or NULL; FILE* (stderr) */
+  json_error_stream,
+  JSON_PARSER_OPT_MAX
 } JSON_PARSER_OPT;
 
 /*! @cond */
@@ -223,39 +223,39 @@ int json_visitor_free_null(json_factory* jsonFact, json_null* nul);
  *  @brief Struct representing an allocator
  */
 typedef struct json_allocator {
-	/*! A malloc-like allocator function */
-	alloc_function malloc;
-	/*! A free-like dealloc function */
-	free_function free;
+  /*! A malloc-like allocator function */
+  alloc_function malloc;
+  /*! A free-like dealloc function */
+  free_function free;
 } json_allocator;
 
 /**
  *  @brief Struct representing a factory to make new objects
  */
 typedef struct json_factory {
-	/*@{ */
-	/*! A pointer to the json_allocator object */
-	json_allocator* allocator;
-	/*@} */
+  /*@{ */
+  /*! A pointer to the json_allocator object */
+  json_allocator* allocator;
+  /*@} */
 
-	/*@{ */
-	/*! Returns a new json_object */
-	json_object* (*new_json_object)(json_factory* jsonFact, json_value* objParentValue);
-	/*! Returns a new json_value */
-	json_value* (*new_json_value)(json_factory* jsonFact, JSON_VALUE valValueType, void* valValue, JSON_VALUE valParentValueType, void* valParentValue);
-	/*! Returns a new json_string */
-	json_string* (*new_json_string)(json_factory* jsonFact, const char* strValue, size_t strValueLen, json_value* strParentValue);
-	/*! Returns a new json_number */
-	json_number* (*new_json_number)(json_factory* jsonFact, double numValue, json_value* numParentValue);
-	/*! Returns a new json_array */
-	json_array* (*new_json_array)(json_factory* jsonFact, json_value* arrParentValue);
-	/*! Returns a new json_true */
-	json_true* (*new_json_true)(json_factory* jsonFact, json_value* truParentValue);
-	/*! Returns a new json_false */
-	json_false* (*new_json_false)(json_factory* jsonFact, json_value* falParentValue);
-	/*! Returns a new json_null */
-	json_null* (*new_json_null)(json_factory* jsonFact, json_value* nulParentValue);
-	/*@} */
+  /*@{ */
+  /*! Returns a new json_object */
+  json_object* (*new_json_object)(json_factory* jsonFact, json_value* objParentValue);
+  /*! Returns a new json_value */
+  json_value* (*new_json_value)(json_factory* jsonFact, JSON_VALUE valValueType, void* valValue, JSON_VALUE valParentValueType, void* valParentValue);
+  /*! Returns a new json_string */
+  json_string* (*new_json_string)(json_factory* jsonFact, const char* strValue, size_t strValueLen, json_value* strParentValue);
+  /*! Returns a new json_number */
+  json_number* (*new_json_number)(json_factory* jsonFact, double numValue, json_value* numParentValue);
+  /*! Returns a new json_array */
+  json_array* (*new_json_array)(json_factory* jsonFact, json_value* arrParentValue);
+  /*! Returns a new json_true */
+  json_true* (*new_json_true)(json_factory* jsonFact, json_value* truParentValue);
+  /*! Returns a new json_false */
+  json_false* (*new_json_false)(json_factory* jsonFact, json_value* falParentValue);
+  /*! Returns a new json_null */
+  json_null* (*new_json_null)(json_factory* jsonFact, json_value* nulParentValue);
+  /*@} */
 } json_factory;
 
 
@@ -267,22 +267,22 @@ typedef struct json_factory {
  *  @see https://tools.ietf.org/html/rfc7159#section-4
  */
 typedef struct json_object {
-	//TODO: Have json_object contain json_string in a json_value ??
-	/*@{ */
-	/*! Array of property names */
-	json_string** names;
-	/*! Array of property values */
-	json_value** values;
-	/*! Current number of names and values occupied */
-	size_t size;
-	/*! Capacity of names and values */
-	size_t capacity;
-	/*@} */
+  //TODO: Have json_object contain json_string in a json_value ??
+  /*@{ */
+  /*! Array of property names */
+  json_string** names;
+  /*! Array of property values */
+  json_value** values;
+  /*! Current number of names and values occupied */
+  size_t size;
+  /*! Capacity of names and values */
+  size_t capacity;
+  /*@} */
 
-	/*@{ */
-	/*! Pointer to the json_value object containing this object */
-	json_value* parentValue;
-	/*@} */
+  /*@{ */
+  /*! Pointer to the json_value object containing this object */
+  json_value* parentValue;
+  /*@} */
 } json_object;
 
 /**
@@ -294,19 +294,19 @@ typedef struct json_object {
  *  @see https://tools.ietf.org/html/rfc7159#section-3
  */
 typedef struct json_value {
-	/*@{ */
-	/*! Type of JSON value this object contains */
-	JSON_VALUE valueType;
-	/*! Pointer to the value object */
-	void* value;
-	/*@} */
+  /*@{ */
+  /*! Type of JSON value this object contains */
+  JSON_VALUE valueType;
+  /*! Pointer to the value object */
+  void* value;
+  /*@} */
 
-	/*@{ */
-	/*! Type of object that contains this value (object_value, array_value or unspecified_value for toplevel) */
-	JSON_VALUE parentValueType;
-	/*! Pointer to the object/array that contains this value or NULL for toplevel */
-	void* parentValue;
-	/*@} */
+  /*@{ */
+  /*! Type of object that contains this value (object_value, array_value or unspecified_value for toplevel) */
+  JSON_VALUE parentValueType;
+  /*! Pointer to the object/array that contains this value or NULL for toplevel */
+  void* parentValue;
+  /*@} */
 } json_value;
 
 /**
@@ -318,17 +318,17 @@ typedef struct json_value {
  *  @see https://tools.ietf.org/html/rfc7159#section-7
  */
 typedef struct json_string {
-	/*@{ */
-	/*! Pointer to string representing UTF-8 encoded text of JSON string */
-	const char* value;
-	/*! Length of @p value */
-	size_t valueLen;
-	/*@} */
+  /*@{ */
+  /*! Pointer to string representing UTF-8 encoded text of JSON string */
+  const char* value;
+  /*! Length of @p value */
+  size_t valueLen;
+  /*@} */
 
-	/*@{ */
-	/*! Pointer to the json_value object containing this string */
-	json_value* parentValue;
-	/*@} */
+  /*@{ */
+  /*! Pointer to the json_value object containing this string */
+  json_value* parentValue;
+  /*@} */
 } json_string;
 
 /**
@@ -340,15 +340,15 @@ typedef struct json_string {
  *  @see https://tools.ietf.org/html/rfc7159#section-6
  */
 typedef struct json_number {
-	/*@{ */
-	/*! The value of the JSON number */
-	double value;
-	/*@} */
+  /*@{ */
+  /*! The value of the JSON number */
+  double value;
+  /*@} */
 
-	/*@{ */
-	/*! Pointer to the json_value object containing this number */
-	json_value* parentValue;
-	/*@} */
+  /*@{ */
+  /*! Pointer to the json_value object containing this number */
+  json_value* parentValue;
+  /*@} */
 } json_number;
 
 /**
@@ -360,19 +360,19 @@ typedef struct json_number {
  *  @see https://tools.ietf.org/html/rfc7159#section-5
  */
 typedef struct json_array {
-	/*@{ */
-	/*! Array of values */
-	json_value** values;
-	/*! Current number of values occupied */
-	size_t size;
-	/*! Capacity of names and values */
-	size_t capacity;
-	/*@} */
+  /*@{ */
+  /*! Array of values */
+  json_value** values;
+  /*! Current number of values occupied */
+  size_t size;
+  /*! Capacity of names and values */
+  size_t capacity;
+  /*@} */
 
-	/*@{ */
-	/*! Pointer to the json_value object containing this array */
-	json_value* parentValue;
-	/*@} */
+  /*@{ */
+  /*! Pointer to the json_value object containing this array */
+  json_value* parentValue;
+  /*@} */
 } json_array;
 
 /**
@@ -383,8 +383,8 @@ typedef struct json_array {
  *  @see https://tools.ietf.org/html/rfc7159#section-3
  */
 typedef struct json_true {
-	/*! Pointer to the json_value object containing this literal */
-	json_value* parentValue;
+  /*! Pointer to the json_value object containing this literal */
+  json_value* parentValue;
 } json_true;
 
 /**
@@ -395,8 +395,8 @@ typedef struct json_true {
  *  @see https://tools.ietf.org/html/rfc7159#section-3
  */
 typedef struct json_false {
-	/*! Pointer to the json_value object containing this literal */
-	json_value* parentValue;
+  /*! Pointer to the json_value object containing this literal */
+  json_value* parentValue;
 } json_false;
 
 /**
@@ -407,14 +407,14 @@ typedef struct json_false {
  *  @see https://tools.ietf.org/html/rfc7159#section-3
  */
 typedef struct json_null {
-	/*! Pointer to the json_value object containing this literal */
-	json_value* parentValue;
+  /*! Pointer to the json_value object containing this literal */
+  json_value* parentValue;
 } json_null;
 
 
 #ifdef __cplusplus
 }
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_TYPES_H
+#endif  //#ifndef JSON_TYPES_H

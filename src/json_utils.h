@@ -28,7 +28,7 @@
 
 #ifndef JSON_TOP_LVL
 #error "The file json_utils.h must not be included directly. Include 'json.h' instead."
-#endif	//#ifndef JSON_TOP_LVL
+#endif  //#ifndef JSON_TOP_LVL
 
 
 #include "json_parser.h"
@@ -39,7 +39,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 /**
  *  @brief Report an error message
@@ -107,7 +107,7 @@ char* json_utils_unescape_string(json_parser_state* parserState, const char* str
 
 #ifdef __cplusplus
 }
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_UTILS_H
+#endif  //#ifndef JSON_UTILS_H

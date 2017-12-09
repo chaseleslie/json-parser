@@ -28,7 +28,7 @@
 
 #ifndef JSON_TOP_LVL
 #error "The file json_parser.h must not be included directly. Include 'json.h' instead."
-#endif	//#ifndef JSON_TOP_LVL
+#endif  //#ifndef JSON_TOP_LVL
 
 
 #include "json_types.h"
@@ -38,7 +38,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
 /**
@@ -47,29 +47,29 @@ extern "C" {
  *  Users shouldn't need to modify this directly, but access it through library calls.
  */
 typedef struct json_parser_state {
-	/*@{ */
-	/*! Pointer to the JSON text string supplied by user, not modified */
-	const char* jsonStr;
-	/*! Length of the JSON text string */
-	size_t jsonStrLength;
-	/*! Current position in the JSON text string */
-	size_t jsonStrPos;
-	/*! State of the parser instance; see JSON_PARSER_STATE */
-	int state;
-	/*! Current nested level */
-	size_t nestedLevel;
-	/*! Max nested level */
-	size_t maxNestedLevel;
-	/*! Error stream */
-	FILE* errorStream;
-	/*@} */
+  /*@{ */
+  /*! Pointer to the JSON text string supplied by user, not modified */
+  const char* jsonStr;
+  /*! Length of the JSON text string */
+  size_t jsonStrLength;
+  /*! Current position in the JSON text string */
+  size_t jsonStrPos;
+  /*! State of the parser instance; see JSON_PARSER_STATE */
+  int state;
+  /*! Current nested level */
+  size_t nestedLevel;
+  /*! Max nested level */
+  size_t maxNestedLevel;
+  /*! Error stream */
+  FILE* errorStream;
+  /*@} */
 
-	/*@{ */
-	/*! Pointer to this parser's json_allocator */
-	json_allocator* JSON_Allocator;
-	/*! Pointer to this parser's json_factory */
-	json_factory* JSON_Factory;
-	/*@} */
+  /*@{ */
+  /*! Pointer to this parser's json_allocator */
+  json_allocator* JSON_Allocator;
+  /*! Pointer to this parser's json_factory */
+  json_factory* JSON_Factory;
+  /*@} */
 } json_parser_state;
 
 
@@ -196,7 +196,7 @@ const char* json_parser_get_state_string(json_parser_state* parserState);
 
 #ifdef __cplusplus
 }
-#endif	//#ifdef __cplusplus
+#endif  //#ifdef __cplusplus
 
 
-#endif	//#ifndef JSON_PARSER_H
+#endif  //#ifndef JSON_PARSER_H
