@@ -77,7 +77,7 @@ void json_error_lineno(const char* err, json_parser_state* parserState) {
 
 //Unescape the passed json string of given size to a null-terminated UTF-8 string
 //Allocates the returned string from JSON_Allocator::malloc
-//TODO: Check that all UTF-16 surrogate pairs are properly encoded to UTF-8
+//TODO: Add option to perform double pass; only alloc necessary str len
 char* json_utils_unescape_string(json_parser_state* parserState, const char* str, size_t n, int* ret, size_t* unescapedLen) {
   char* unescaped = NULL;
   *ret = 1;
